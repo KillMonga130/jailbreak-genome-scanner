@@ -1,0 +1,58 @@
+================================================================================
+LAMBDA CLOUD INSTANCE DETAILS
+================================================================================
+
+Instance ID: 8d3d9dac2688407aa395179c75fb4203
+IP Address: 209.20.159.141
+Status: booting (wait for "active")
+Instance Type: gpu_1x_h100_pcie
+Region: us-west-3 (Utah, USA)
+SSH Key: moses
+Cost: $2.49/hour
+
+================================================================================
+QUICK COMMANDS
+================================================================================
+
+Check Status:
+  python get_instance_details.py
+
+SSH Into Instance:
+  ssh -i ~/.ssh/moses ubuntu@209.20.159.141
+
+Setup vLLM (Automated):
+  python scripts/setup_vllm_on_lambda.py --ip 209.20.159.141 --key ~/.ssh/moses --model microsoft/phi-2
+
+Test Connectivity:
+  python scripts/check_connectivity.py --ip 209.20.159.141
+
+================================================================================
+API ENDPOINT (when ready)
+================================================================================
+
+http://209.20.159.141:8000/v1/chat/completions
+
+================================================================================
+DASHBOARD CONFIGURATION
+================================================================================
+
+Defender Type: Lambda Cloud
+Instance ID: 8d3d9dac2688407aa395179c75fb4203
+API Endpoint: http://209.20.159.141:8000/v1/chat/completions
+Model: microsoft/phi-2 (or your chosen model)
+
+================================================================================
+⚠️  IMPORTANT: ALWAYS TERMINATE WHEN DONE
+================================================================================
+
+Terminate via Dashboard:
+  https://cloud.lambda.ai -> Instances -> Terminate
+
+Terminate via Code:
+  from src.integrations.lambda_cloud import LambdaCloudClient
+  import asyncio
+  client = LambdaCloudClient()
+  asyncio.run(client.terminate_instance("8d3d9dac2688407aa395179c75fb4203"))
+
+================================================================================
+

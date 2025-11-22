@@ -1,0 +1,54 @@
+{
+  "deployed_models": {
+    "mistral-7b-instruct": {
+      "instance_id": "8d3d9dac2688407aa395179c75fb4203",
+      "model_name": "mistralai/Mistral-7B-Instruct-v0.2",
+      "instance_type": "gpu_1x_a10",
+      "region": "us-west-3",
+      "status": "active",
+      "instance_ip": "209.20.159.141",
+      "api_endpoint": "http://209.20.159.141:8000/v1/chat/completions"
+    },
+    "llama-2-7b-chat": {
+      "instance_id": "f401d9d6a1e649b2a74be9a2959a828a",
+      "model_name": "meta-llama/Llama-2-7b-chat-hf",
+      "instance_type": "gpu_1x_a10",
+      "region": "us-east-1",
+      "status": "active",
+      "instance_ip": "150.136.146.143",
+      "api_endpoint": "http://150.136.146.143:8000/v1/completions"
+    }
+  },
+  "available_models": {
+    "llama-2-7b-chat": {
+      "model_name": "meta-llama/Llama-2-7b-chat-hf",
+      "instance_type": "gpu_1x_a10",
+      "description": "Llama 2 7B Chat - Good for testing and development"
+    },
+    "llama-2-13b-chat": {
+      "model_name": "meta-llama/Llama-2-13b-chat-hf",
+      "instance_type": "gpu_1x_a100",
+      "description": "Llama 2 13B Chat - Better capabilities"
+    },
+    "mistral-7b-instruct": {
+      "model_name": "mistralai/Mistral-7B-Instruct-v0.2",
+      "instance_type": "gpu_1x_a10",
+      "description": "Mistral 7B Instruct - High quality responses"
+    },
+    "phi-2": {
+      "model_name": "microsoft/phi-2",
+      "instance_type": "gpu_1x_a10",
+      "description": "Phi-2 - Small but capable model"
+    },
+    "falcon-7b-instruct": {
+      "model_name": "tiiuae/falcon-7b-instruct",
+      "instance_type": "gpu_1x_a10",
+      "description": "Falcon 7B Instruct - Good for instruction following"
+    },
+    "qwen-7b-chat": {
+      "model_name": "Qwen/Qwen-7B-Chat",
+      "instance_type": "gpu_1x_a10",
+      "description": "Qwen 7B Chat - Multilingual support"
+    }
+  }
+}

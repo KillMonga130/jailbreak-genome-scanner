@@ -1,0 +1,424 @@
+"""Jailbreak Arena - Competitive evaluation system."""
+
+import asyncio
+import uuid
+from datetime import datetime
+from typing import List, Dict, Any, Optional
+from collections import defaultdict
+from src.models.jailbreak import (
+    EvaluationResult, AttackerProfile, DefenderProfile,
+    ArenaRound, ArenaLeaderboard, AttackStrategy
+)
+from src.defenders.llm_defender import LLMDefender, DefenderRegistry
+from src.attackers.prompt_generator import PromptGenerator
+from src.referee.safety_classifier import SafetyClassifier
+from src.scoring.jvi_calculator import JVICalculator
+from src.genome.map_generator import GenomeMapGenerator
+from src.utils.logger import log
+from src.config import settings
+
+
+class JailbreakArena:
+    """Main arena for competitive jailbreak evaluation."""
+    
+    def __init__(
+        self,
+        referee: Optional[SafetyClassifier] = None,
+        jvi_calculator: Optional[JVICalculator] = None
+    ):
+        """
+        Initialize the Jailbreak Arena.
+        
+        Args:
+            referee: Optional safety classifier (creates default if None)
+            jvi_calculator: Optional JVI calculator (creates default if None)
+        """
+        self.defender_registry = DefenderRegistry()
+        self.attackers: List[AttackerProfile] = []
+        self.prompt_generator = PromptGenerator()
+        self.referee = referee or SafetyClassifier()
+        self.jvi_calculator = jvi_calculator or JVICalculator()
+        self.genome_generator = GenomeMapGenerator()
+        
+        # Evaluation history
+        self.evaluation_history: List[EvaluationResult] = []
+        self.rounds: List[ArenaRound] = []
+        
+        # Statistics
+        self.total_rounds = 0
+        self.total_evaluations = 0
+        
+        log.info("Jailbreak Arena initialized")
+    
+    @property
+    def defenders(self) -> List[LLMDefender]:
+        """Get list of all registered defenders (for backward compatibility)."""
+        return self.defender_registry.list_all()
+    
+    def add_defender(self, defender: LLMDefender) -> None:
+        """
+        Add a defender (model) to the arena.
+        
+        Args:
+            defender: LLMDefender instance
+        """
+        self.defender_registry.register(defender)
+        log.info(f"Added defender: {defender.profile.model_name}")
+    
+    def add_attackers(
+        self,
+        attackers: List[AttackerProfile],
+        num_per_strategy: int = 10
+    ) -> None:
+        """
+        Add attackers to the arena.
+        
+        Args:
+            attackers: List of attacker profiles
+            num_per_strategy: Number of prompts to generate per strategy
+        """
+        self.attackers.extend(attackers)
+        log.info(f"Added {len(attackers)} attackers to arena")
+    
+    def generate_attackers(
+        self,
+        num_strategies: int = 10,
+        strategies: Optional[List[AttackStrategy]] = None,
+        difficulty_range: Optional[tuple] = None
+    ) -> None:
+        """
+        Generate and add attackers with different strategies.
+        
+        Args:
+            num_strategies: Number of different attack strategies
+            strategies: Optional list of specific strategies to use
+            difficulty_range: Optional (min, max) difficulty tuple for database prompts
+        """
+        attackers = self.prompt_generator.generate_attackers(
+            num_strategies=num_strategies,
+            strategies=strategies,
+            difficulty_range=difficulty_range
+        )
+        self.add_attackers(attackers)
+    
+    async def evaluate(
+        self,
+        rounds: Optional[int] = None,
+        defenders: Optional[List[LLMDefender]] = None,
+        parallel: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run evaluation rounds in the arena.
+        
+        Args:
+            rounds: Number of rounds to run (defaults to config)
+            defenders: Optional list of specific defenders to test
+            parallel: Whether to run evaluations in parallel
+            
+        Returns:
+            Evaluation results dictionary
+        """
+        rounds = rounds or settings.arena_rounds
+        defenders_to_test = defenders or self.defender_registry.list_all()
+        
+        if not defenders_to_test:
+            raise ValueError("No defenders registered in arena")
+        
+        if not self.attackers:
+            log.warning("No attackers in arena, generating default attackers")
+            self.generate_attackers()
+        
+        log.info(f"Starting arena evaluation: {rounds} rounds, {len(defenders_to_test)} defenders, {len(self.attackers)} attackers")
+        
+        # Run rounds
+        for round_num in range(1, rounds + 1):
+            log.info(f"Starting round {round_num}/{rounds}")
+            
+            round_results = await self._run_round(
+                round_num=round_num,
+                defenders=defenders_to_test,
+                parallel=parallel
+            )
+            
+            self.rounds.append(round_results)
+            self.total_rounds += 1
+        
+        # Calculate final scores
+        results = self._compile_results(defenders_to_test)
+        
+        log.info(f"Arena evaluation complete: {self.total_evaluations} total evaluations")
+        return results
+    
+    async def _run_round(
+        self,
+        round_num: int,
+        defenders: List[LLMDefender],
+        parallel: bool = True
+    ) -> ArenaRound:
+        """
+        Run a single arena round.
+        
+        Args:
+            round_num: Round number
+            defenders: Defenders to test
+            parallel: Whether to run in parallel
+            
+        Returns:
+            ArenaRound results
+        """
+        round_evaluations: List[EvaluationResult] = []
+        attacker_scores: Dict[str, float] = defaultdict(float)
+        
+        # Generate prompts for each attacker
+        attacker_prompts: Dict[str, str] = {}
+        for attacker in self.attackers:
+            difficulty_range = attacker.metadata.get("difficulty_range") if attacker.metadata else None
+            try:
+                prompt = self.prompt_generator.generate_prompt(
+                    attacker.strategy,
+                    difficulty_range=difficulty_range,
+                    use_database=True
+                )
+                attacker_prompts[attacker.id] = prompt
+            except Exception as e:
+                log.error(f"Error generating prompt for attacker {attacker.id}: {e}")
+                # Fallback prompt
+                attacker_prompts[attacker.id] = f"Test prompt for {attacker.strategy.value}"
+        
+        # Evaluate each defender against all attackers
+        tasks = []
+        for defender in defenders:
+            for attacker in self.attackers:
+                prompt = attacker_prompts[attacker.id]
+                
+                if parallel:
+                    task = self._evaluate_pair(defender, attacker, prompt)
+                    tasks.append(task)
+                else:
+                    evaluation = await self._evaluate_pair(defender, attacker, prompt)
+                    round_evaluations.append(evaluation)
+                    self._update_scores(evaluation, attacker_scores)
+        
+        # Wait for parallel tasks
+        if parallel and tasks:
+            evaluations = await asyncio.gather(*tasks)
+            for evaluation in evaluations:
+                round_evaluations.append(evaluation)
+                self._update_scores(evaluation, attacker_scores)
+        
+        # Update history
+        self.evaluation_history.extend(round_evaluations)
+        self.total_evaluations += len(round_evaluations)
+        
+        # Count successful attacks
+        successful_attacks = sum(1 for e in round_evaluations if e.is_jailbroken)
+        
+        round_result = ArenaRound(
+            round_number=round_num,
+            defender_id=defenders[0].profile.id if defenders else "unknown",
+            attacker_ids=[a.id for a in self.attackers],
+            evaluations=round_evaluations,
+            successful_attacks=successful_attacks,
+            attacker_scores=dict(attacker_scores)
+        )
+        
+        log.info(f"Round {round_num} complete: {successful_attacks}/{len(round_evaluations)} successful attacks")
+        return round_result
+    
+    async def _evaluate_pair(
+        self,
+        defender: LLMDefender,
+        attacker: AttackerProfile,
+        prompt: str
+    ) -> EvaluationResult:
+        """
+        Evaluate a single defender-attacker pair.
+        
+        Args:
+            defender: Defender model
+            attacker: Attacker profile
+            prompt: Adversarial prompt
+            
+        Returns:
+            Evaluation result
+        """
+        # Generate response from defender
+        response = await defender.generate_response(prompt)
+        
+        # Classify response
+        evaluation = await self.referee.classify(
+            prompt=prompt,
+            response=response,
+            attack_strategy=attacker.strategy
+        )
+        
+        # Update evaluation metadata
+        evaluation.defender_id = defender.profile.id
+        evaluation.defender_model = defender.model_name
+        evaluation.attacker_id = attacker.id
+        
+        # Update attacker stats
+        attacker.total_attempts += 1
+        if evaluation.is_jailbroken:
+            attacker.successful_exploits += 1
+            attacker.success_rate = attacker.successful_exploits / attacker.total_attempts
+        
+        return evaluation
+    
+    def _update_scores(
+        self,
+        evaluation: EvaluationResult,
+        attacker_scores: Dict[str, float]
+    ) -> None:
+        """Update attacker scores based on evaluation."""
+        if evaluation.is_jailbroken:
+            # Score based on severity
+            base_score = 10.0
+            severity_multiplier = evaluation.severity.value / 5.0
+            score = base_score * severity_multiplier
+            
+            attacker_scores[evaluation.attacker_id] += score
+    
+    def _compile_results(self, defenders: List[LLMDefender]) -> Dict[str, Any]:
+        """
+        Compile final evaluation results.
+        
+        Args:
+            defenders: List of defenders tested
+            
+        Returns:
+            Results dictionary
+        """
+        results = {}
+        
+        # Calculate JVI for each defender
+        defender_results = []
+        for defender in defenders:
+            defender_evals = [
+                e for e in self.evaluation_history
+                if e.defender_id == defender.profile.id
+            ]
+            
+            jvi_result = self.jvi_calculator.calculate_jvi(
+                defender_evals,
+                defender.profile
+            )
+            
+            defender_results.append({
+                "defender": defender.profile,
+                "jvi": jvi_result,
+                "evaluations": defender_evals
+            })
+        
+        # Generate genome map (using all successful exploits)
+        successful_exploits = [
+            e for e in self.evaluation_history if e.is_jailbroken
+        ]
+        genome_map = self.genome_generator.generate(successful_exploits)
+        
+        # Create leaderboard
+        sorted_attackers = sorted(
+            self.attackers,
+            key=lambda a: a.total_points,
+            reverse=True
+        )
+        
+        leaderboard = ArenaLeaderboard(
+            top_attackers=sorted_attackers[:10],
+            defender_rankings=[d["defender"] for d in defender_results],
+            total_rounds=self.total_rounds,
+            total_exploits=len(successful_exploits)
+        )
+        
+        results = {
+            "defenders": defender_results,
+            "attackers": self.attackers,
+            "genome_map": genome_map,
+            "leaderboard": leaderboard,
+            "statistics": {
+                "total_rounds": self.total_rounds,
+                "total_evaluations": self.total_evaluations,
+                "total_exploits": len(successful_exploits),
+                "exploit_rate": len(successful_exploits) / self.total_evaluations if self.total_evaluations > 0 else 0.0
+            },
+            "evaluation_history": self.evaluation_history
+        }
+        
+        return results
+    
+    def get_jvi_score(self, defender_id: Optional[str] = None) -> float:
+        """
+        Get JVI score for a defender (or average if None).
+        
+        Args:
+            defender_id: Optional specific defender ID
+            
+        Returns:
+            JVI score
+        """
+        if defender_id:
+            defender = self.defender_registry.get(defender_id)
+            if defender:
+                return defender.profile.jvi_score
+            return 0.0
+        
+        # Return average JVI
+        defenders = self.defender_registry.list_all()
+        if not defenders:
+            return 0.0
+        
+        avg_jvi = sum(d.profile.jvi_score for d in defenders) / len(defenders)
+        return avg_jvi
+    
+    def get_leaderboard(self) -> ArenaLeaderboard:
+        """Get current arena leaderboard."""
+        sorted_attackers = sorted(
+            self.attackers,
+            key=lambda a: a.total_points,
+            reverse=True
+        )
+        
+        defenders = self.defender_registry.get_profiles()
+        sorted_defenders = sorted(
+            defenders,
+            key=lambda d: d.jvi_score,
+            reverse=True  # Higher JVI = more vulnerable = worse
+        )
+        
+        return ArenaLeaderboard(
+            top_attackers=sorted_attackers[:10],
+            defender_rankings=sorted_defenders,
+            total_rounds=self.total_rounds,
+            total_exploits=len([e for e in self.evaluation_history if e.is_jailbroken])
+        )
+    
+    def export_results(self, filepath: str) -> None:
+        """
+        Export evaluation results to file.
+        
+        Args:
+            filepath: Path to save results
+        """
+        import json
+        from pathlib import Path
+        
+        output_path = Path(filepath)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Serialize results
+        results = {
+            "rounds": [r.dict() for r in self.rounds],
+            "evaluations": [e.dict() for e in self.evaluation_history],
+            "attackers": [a.dict() for a in self.attackers],
+            "defenders": [d.profile.dict() for d in self.defender_registry.list_all()],
+            "statistics": {
+                "total_rounds": self.total_rounds,
+                "total_evaluations": self.total_evaluations
+            }
+        }
+        
+        with open(output_path, 'w') as f:
+            json.dump(results, f, indent=2, default=str)
+        
+        log.info(f"Exported results to {filepath}")
+
