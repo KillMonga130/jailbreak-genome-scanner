@@ -363,16 +363,10 @@ st.markdown("""
         background: #60a5fa !important;
     }
     
-    /* Premium Progress Bar - Cyan/Blue */
+    /* Clean progress bar */
     .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #06b6d4, #0ea5e9, #3b82f6) !important;
-        border-radius: 10px !important;
-        box-shadow: 0 0 20px rgba(6, 182, 212, 0.5) !important;
-        
-    }
-    
-    
-        100% { background-position: 200% 0; }
+        background: #3b82f6 !important;
+        border-radius: 4px !important;
     }
     
     /* Premium Typography */
