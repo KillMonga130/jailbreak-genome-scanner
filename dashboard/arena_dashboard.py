@@ -2132,12 +2132,13 @@ python3 -m vllm.entrypoints.openai.api_server \\
             
             # Enhanced visualization tabs
             st.markdown("---")
-            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "Trends",
                 "Strategies",
                 "Severity",
                 "Leaderboard",
-                "3D Vector Space"
+                "3D Vector Space",
+                "🛡️ Defense Improvement"
             ])
             
             evaluation_history = results.get('evaluation_history', [])
