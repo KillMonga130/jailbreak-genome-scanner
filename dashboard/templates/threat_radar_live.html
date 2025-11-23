@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threat Radar - Live Defense</title>
+    <title>Threat Radar - Live Defense Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,8 +15,9 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 50%, #1e293b 100%);
+            background-attachment: fixed;
             color: #e0e7ff;
             overflow: hidden;
         }
@@ -22,7 +26,11 @@
             position: relative;
             width: 100%;
             height: 100vh;
-            background: radial-gradient(circle at center, rgba(6, 182, 212, 0.1) 0%, rgba(15, 23, 42, 0.95) 100%);
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(239, 68, 68, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 80%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at center, rgba(15, 23, 42, 0.95) 0%, rgba(10, 14, 26, 0.98) 100%);
             overflow: hidden;
         }
         
@@ -43,79 +51,139 @@
         }
         
         .zone.bio {
-            border-color: #dc3545;
-            background: radial-gradient(circle, rgba(220, 53, 69, 0.1) 0%, transparent 70%);
+            border-color: #ef4444;
+            background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.2);
         }
         
         .zone.cyber {
-            border-color: #06b6d4;
-            background: radial-gradient(circle, rgba(6, 182, 212, 0.1) 0%, transparent 70%);
+            border-color: #3b82f6;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.2);
         }
         
         .zone.social {
             border-color: #f59e0b;
-            background: radial-gradient(circle, rgba(245, 158, 11, 0.1) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, transparent 70%);
+            box-shadow: 0 0 30px rgba(245, 158, 11, 0.2);
         }
         
         .stats-panel {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(15, 23, 42, 0.9);
-            padding: 20px;
-            border-radius: 12px;
-            border: 2px solid #06b6d4;
-            min-width: 250px;
-            backdrop-filter: blur(10px);
+            background: rgba(15, 23, 42, 0.92);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            min-width: 280px;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
             z-index: 1000;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+        
+        .stats-panel h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #3b82f6;
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+            padding-bottom: 12px;
         }
         
         .stat-item {
             display: flex;
             justify-content: space-between;
-            margin: 10px 0;
-            padding: 8px;
-            background: rgba(6, 182, 212, 0.1);
-            border-radius: 6px;
+            align-items: center;
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: rgba(59, 130, 246, 0.08);
+            border-radius: 10px;
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateX(4px);
         }
         
         .stat-label {
-            font-weight: 600;
-            color: #a5f3fc;
+            font-weight: 500;
+            color: #93c5fd;
+            font-size: 0.9rem;
         }
         
         .stat-value {
-            font-weight: bold;
-            color: #06b6d4;
+            font-weight: 700;
+            color: #3b82f6;
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        .stat-value.success {
+            color: #22c55e;
+        }
+        
+        .stat-value.danger {
+            color: #ef4444;
         }
         
         .message-popup {
             position: absolute;
             background: rgba(15, 23, 42, 0.95);
-            padding: 12px 16px;
-            border-radius: 8px;
+            padding: 14px 18px;
+            border-radius: 12px;
             border-left: 4px solid;
             font-size: 12px;
-            max-width: 200px;
+            max-width: 240px;
             pointer-events: none;
             z-index: 2000;
-            animation: fadeInOut 3s ease-in-out;
-            backdrop-filter: blur(10px);
+            animation: fadeInOut 3.5s ease-in-out;
+            backdrop-filter: blur(15px) saturate(180%);
+            -webkit-backdrop-filter: blur(15px) saturate(180%);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+            font-family: 'Inter', sans-serif;
         }
         
         .message-popup.blocked {
             border-color: #22c55e;
             color: #86efac;
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
         }
         
         .message-popup.exploited {
-            border-color: #dc3545;
+            border-color: #ef4444;
             color: #fca5a5;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+        }
+        
+        .message-popup strong {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+        
+        .message-popup small {
+            display: block;
+            font-size: 11px;
+            opacity: 0.9;
+            line-height: 1.4;
         }
         
         @keyframes fadeInOut {
-            0%, 100% { opacity: 0; transform: translateY(-10px); }
-            10%, 90% { opacity: 1; transform: translateY(0); }
+            0% { opacity: 0; transform: translateY(-15px) scale(0.9); }
+            8%, 85% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
         }
         
         .explosion {
@@ -144,24 +212,56 @@
         
         .zone-label {
             position: absolute;
-            font-size: 14px;
-            font-weight: bold;
+            font-size: 13px;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             pointer-events: none;
             z-index: 500;
+            font-family: 'JetBrains Mono', monospace;
+            text-shadow: 0 0 10px currentColor;
         }
         
         .zone-label.bio {
-            color: #dc3545;
+            color: #ef4444;
         }
         
         .zone-label.cyber {
-            color: #06b6d4;
+            color: #3b82f6;
         }
         
         .zone-label.social {
             color: #f59e0b;
+        }
+        
+        .zone-indicator {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 400;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        .zone-indicator.bio {
+            background: #ef4444;
+            box-shadow: 0 0 20px #ef4444;
+        }
+        
+        .zone-indicator.cyber {
+            background: #3b82f6;
+            box-shadow: 0 0 20px #3b82f6;
+        }
+        
+        .zone-indicator.social {
+            background: #f59e0b;
+            box-shadow: 0 0 20px #f59e0b;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.3); }
         }
     </style>
 </head>
@@ -175,32 +275,39 @@
         <div class="zone social" id="zone-social" style="bottom: 20%; left: 50%; transform: translateX(-50%); width: 200px; height: 200px;"></div>
         
         <!-- Zone Labels -->
-        <div class="zone-label bio" style="top: 18%; left: 22%;">BIO HAZARD</div>
-        <div class="zone-label cyber" style="top: 18%; right: 22%;">CYBER EXPLOIT</div>
-        <div class="zone-label social" style="bottom: 18%; left: 50%; transform: translateX(-50%);">SOCIAL ENGINEERING</div>
+        <div class="zone-label bio" style="top: 17%; left: 21%;">BIO HAZARD</div>
+        <div class="zone-indicator bio" style="top: 20%; left: 20%; transform: translate(-50%, -50%);"></div>
+        <div class="zone-label cyber" style="top: 17%; right: 21%;">CYBER EXPLOIT</div>
+        <div class="zone-indicator cyber" style="top: 20%; right: 20%; transform: translate(50%, -50%);"></div>
+        <div class="zone-label social" style="bottom: 17%; left: 50%; transform: translateX(-50%);">SOCIAL ENGINEERING</div>
+        <div class="zone-indicator social" style="bottom: 20%; left: 50%; transform: translate(-50%, 50%);"></div>
         
         <!-- Stats Panel -->
         <div class="stats-panel">
-            <h3 style="margin-bottom: 15px; color: #06b6d4; text-align: center;">THREAT RADAR</h3>
+            <h3>Threat Radar</h3>
             <div class="stat-item">
-                <span class="stat-label">Active Threats:</span>
+                <span class="stat-label">Active Threats</span>
                 <span class="stat-value" id="active-threats">0</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Blocked:</span>
-                <span class="stat-value" id="blocked-count" style="color: #22c55e;">0</span>
+                <span class="stat-label">Blocked</span>
+                <span class="stat-value success" id="blocked-count">0</span>
             </div>
             <div class="stat-item">
-                <span class="stat-value" id="exploited-count" style="color: #dc3545;">0</span>
-                <span class="stat-label">Exploited:</span>
+                <span class="stat-label">Exploited</span>
+                <span class="stat-value danger" id="exploited-count">0</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Success Rate:</span>
+                <span class="stat-label">Exploit Rate</span>
                 <span class="stat-value" id="success-rate">0%</span>
             </div>
             <div class="stat-item">
-                <span class="stat-label">Round:</span>
+                <span class="stat-label">Round</span>
                 <span class="stat-value" id="current-round">0/0</span>
+            </div>
+            <div class="stat-item" style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(59, 130, 246, 0.2);">
+                <span class="stat-label">JVI Score</span>
+                <span class="stat-value" id="jvi-score" style="font-size: 1.2rem;">--</span>
             </div>
         </div>
     </div>
@@ -303,6 +410,25 @@
                 const successRate = total > 0 ? ((this.stats.exploited / total) * 100).toFixed(1) : 0;
                 document.getElementById('success-rate').textContent = successRate + '%';
                 document.getElementById('current-round').textContent = `${this.stats.round}/${this.stats.totalRounds}`;
+                
+                // Calculate and display JVI score
+                if (total > 0) {
+                    const exploitRate = this.stats.exploited / total;
+                    const avgSeverity = this.stats.avgSeverity || 0;
+                    const jviScore = Math.min(100, Math.round(exploitRate * 70 + avgSeverity * 6));
+                    const jviElement = document.getElementById('jvi-score');
+                    jviElement.textContent = jviScore;
+                    
+                    // Color code JVI score
+                    if (jviScore >= 70) {
+                        jviElement.className = 'stat-value danger';
+                    } else if (jviScore >= 40) {
+                        jviElement.className = 'stat-value';
+                        jviElement.style.color = '#f59e0b';
+                    } else {
+                        jviElement.className = 'stat-value success';
+                    }
+                }
             }
             
             animate() {
@@ -321,21 +447,24 @@
                         const dy = plane.targetY - plane.y;
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
-                        if (distance > 5) {
-                            // Enhanced movement with easing
-                            const easing = 0.1;
-                            plane.x += dx * easing;
-                            plane.y += dy * easing;
+                        if (distance > 8) {
+                            // Enhanced movement with smooth easing
+                            const easing = 0.08 + (plane.speed * 0.02);
+                            const moveX = dx * easing;
+                            const moveY = dy * easing;
+                            
+                            plane.x += moveX;
+                            plane.y += moveY;
                             
                             // Update angle smoothly
                             plane.angle = Math.atan2(dy, dx);
                             
-                            // Calculate progress
-                            const totalDistance = Math.sqrt(
-                                Math.pow(plane.targetX - (plane.x - dx), 2) +
-                                Math.pow(plane.targetY - (plane.y - dy), 2)
+                            // Calculate progress for visual feedback
+                            const initialDistance = Math.sqrt(
+                                Math.pow(plane.targetX - (plane.x - moveX), 2) +
+                                Math.pow(plane.targetY - (plane.y - moveY), 2)
                             );
-                            plane.progress = 1 - (distance / totalDistance);
+                            plane.progress = 1 - (distance / initialDistance);
                         } else {
                             // Reached target zone
                             plane.reached = true;
@@ -367,32 +496,46 @@
             drawRadarSweep() {
                 const centerX = this.canvas.width / 2;
                 const centerY = this.canvas.height / 2;
-                const radius = Math.min(this.canvas.width, this.canvas.height) * 0.4;
+                const radius = Math.min(this.canvas.width, this.canvas.height) * 0.45;
                 
-                // Enhanced concentric circles with stronger pulsing effect
-                const pulse = Math.sin(Date.now() / 800) * 0.15 + 0.85;
-                for (let i = 1; i <= 5; i++) {
-                    const alpha = (0.4 / i) * pulse;
-                    this.ctx.strokeStyle = `rgba(6, 182, 212, ${alpha})`;
+                // Enhanced concentric circles with professional pulsing
+                const pulse = Math.sin(Date.now() / 1000) * 0.12 + 0.88;
+                for (let i = 1; i <= 6; i++) {
+                    const alpha = (0.35 / i) * pulse;
+                    this.ctx.strokeStyle = `rgba(59, 130, 246, ${alpha})`;
                     this.ctx.lineWidth = 1.5;
-                    this.ctx.shadowBlur = 5;
-                    this.ctx.shadowColor = 'rgba(6, 182, 212, 0.5)';
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
                     this.ctx.beginPath();
-                    this.ctx.arc(centerX, centerY, radius * (i / 5), 0, Math.PI * 2);
+                    this.ctx.arc(centerX, centerY, radius * (i / 6), 0, Math.PI * 2);
                     this.ctx.stroke();
                 }
                 this.ctx.shadowBlur = 0;
                 
+                // Grid lines for better orientation
+                this.ctx.strokeStyle = `rgba(59, 130, 246, 0.15)`;
+                this.ctx.lineWidth = 1;
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i * Math.PI * 2) / 8;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(centerX, centerY);
+                    this.ctx.lineTo(
+                        centerX + Math.cos(angle) * radius,
+                        centerY + Math.sin(angle) * radius
+                    );
+                    this.ctx.stroke();
+                }
+                
                 // Enhanced animated sweep line with trailing effect
-                const sweepAngle = (Date.now() / 15) % 360;
+                const sweepAngle = (Date.now() / 12) % 360;
                 const sweepRad = (sweepAngle * Math.PI) / 180;
                 
-                // Draw trailing sweep (fade effect)
-                for (let i = 0; i < 3; i++) {
-                    const trailAngle = ((sweepAngle - i * 5 + 360) % 360) * Math.PI / 180;
-                    const alpha = 0.3 - (i * 0.1);
-                    this.ctx.strokeStyle = `rgba(6, 182, 212, ${alpha})`;
-                    this.ctx.lineWidth = 2;
+                // Draw trailing sweep (fade effect) - more trails for smoother look
+                for (let i = 0; i < 5; i++) {
+                    const trailAngle = ((sweepAngle - i * 4 + 360) % 360) * Math.PI / 180;
+                    const alpha = 0.25 - (i * 0.05);
+                    this.ctx.strokeStyle = `rgba(59, 130, 246, ${alpha})`;
+                    this.ctx.lineWidth = 2.5 - (i * 0.3);
                     this.ctx.beginPath();
                     this.ctx.moveTo(centerX, centerY);
                     this.ctx.lineTo(
@@ -403,10 +546,10 @@
                 }
                 
                 // Main sweep line with enhanced glow
-                this.ctx.strokeStyle = 'rgba(6, 182, 212, 0.9)';
-                this.ctx.lineWidth = 4;
-                this.ctx.shadowBlur = 15;
-                this.ctx.shadowColor = '#06b6d4';
+                this.ctx.strokeStyle = 'rgba(59, 130, 246, 0.95)';
+                this.ctx.lineWidth = 5;
+                this.ctx.shadowBlur = 20;
+                this.ctx.shadowColor = '#3b82f6';
                 this.ctx.beginPath();
                 this.ctx.moveTo(centerX, centerY);
                 this.ctx.lineTo(
@@ -414,35 +557,54 @@
                     centerY + Math.sin(sweepRad) * radius
                 );
                 this.ctx.stroke();
+                
+                // Center point
+                this.ctx.fillStyle = '#3b82f6';
+                this.ctx.shadowBlur = 15;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, 4, 0, Math.PI * 2);
+                this.ctx.fill();
                 this.ctx.shadowBlur = 0;
             }
             
             drawThreatZones() {
                 const zones = {
-                    bio: { x: window.innerWidth * 0.2, y: window.innerHeight * 0.2, radius: 120, color: '#dc3545', label: 'BIO HAZARD' },
-                    cyber: { x: window.innerWidth * 0.8, y: window.innerHeight * 0.2, radius: 120, color: '#06b6d4', label: 'CYBER EXPLOIT' },
-                    social: { x: window.innerWidth * 0.5, y: window.innerHeight * 0.8, radius: 120, color: '#f59e0b', label: 'SOCIAL ENGINEERING' }
+                    bio: { x: window.innerWidth * 0.2, y: window.innerHeight * 0.2, radius: 140, color: '#ef4444', label: 'BIO HAZARD' },
+                    cyber: { x: window.innerWidth * 0.8, y: window.innerHeight * 0.2, radius: 140, color: '#3b82f6', label: 'CYBER EXPLOIT' },
+                    social: { x: window.innerWidth * 0.5, y: window.innerHeight * 0.8, radius: 140, color: '#f59e0b', label: 'SOCIAL ENGINEERING' }
                 };
                 
                 Object.values(zones).forEach(zone => {
                     // Enhanced pulsing border with multiple layers
-                    const pulse = Math.sin(Date.now() / 600) * 0.25 + 0.75;
-                    const pulse2 = Math.sin(Date.now() / 400 + Math.PI / 3) * 0.15 + 0.85;
+                    const pulse = Math.sin(Date.now() / 800) * 0.2 + 0.8;
+                    const pulse2 = Math.sin(Date.now() / 500 + Math.PI / 4) * 0.12 + 0.88;
                     
-                    // Outer glow
-                    this.ctx.strokeStyle = zone.color + Math.floor(pulse * 100).toString(16).padStart(2, '0');
-                    this.ctx.lineWidth = 5;
-                    this.ctx.shadowBlur = 20;
+                    // Outer glow ring
+                    const alpha1 = Math.floor(pulse * 60).toString(16).padStart(2, '0');
+                    this.ctx.strokeStyle = zone.color + alpha1;
+                    this.ctx.lineWidth = 6;
+                    this.ctx.shadowBlur = 25;
                     this.ctx.shadowColor = zone.color;
-                    this.ctx.setLineDash([12, 6]);
+                    this.ctx.setLineDash([15, 8]);
                     this.ctx.beginPath();
-                    this.ctx.arc(zone.x, zone.y, zone.radius + 5, 0, Math.PI * 2);
+                    this.ctx.arc(zone.x, zone.y, zone.radius + 8, 0, Math.PI * 2);
+                    this.ctx.stroke();
+                    
+                    // Middle ring
+                    const alpha2 = Math.floor(pulse2 * 80).toString(16).padStart(2, '0');
+                    this.ctx.strokeStyle = zone.color + alpha2;
+                    this.ctx.lineWidth = 4;
+                    this.ctx.shadowBlur = 15;
+                    this.ctx.setLineDash([10, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.arc(zone.x, zone.y, zone.radius + 3, 0, Math.PI * 2);
                     this.ctx.stroke();
                     
                     // Main border
-                    this.ctx.strokeStyle = zone.color + Math.floor(pulse2 * 255).toString(16).padStart(2, '0');
+                    this.ctx.strokeStyle = zone.color;
                     this.ctx.lineWidth = 3;
-                    this.ctx.shadowBlur = 10;
+                    this.ctx.shadowBlur = 12;
+                    this.ctx.setLineDash([]);
                     this.ctx.beginPath();
                     this.ctx.arc(zone.x, zone.y, zone.radius, 0, Math.PI * 2);
                     this.ctx.stroke();
@@ -450,14 +612,14 @@
                     this.ctx.setLineDash([]);
                     this.ctx.shadowBlur = 0;
                     
-                    // Draw zone label with glow
+                    // Draw zone label with enhanced styling
                     this.ctx.fillStyle = zone.color;
-                    this.ctx.font = 'bold 16px sans-serif';
+                    this.ctx.font = '700 14px "JetBrains Mono", monospace';
                     this.ctx.textAlign = 'center';
                     this.ctx.textBaseline = 'middle';
-                    this.ctx.shadowBlur = 8;
+                    this.ctx.shadowBlur = 12;
                     this.ctx.shadowColor = zone.color;
-                    this.ctx.fillText(zone.label, zone.x, zone.y - zone.radius - 25);
+                    this.ctx.fillText(zone.label, zone.x, zone.y - zone.radius - 30);
                     this.ctx.shadowBlur = 0;
                 });
             }
@@ -472,43 +634,59 @@
                 if (plane.destroyed) {
                     color = '#22c55e'; // Green for blocked
                 } else if (plane.reached && plane.isJailbroken) {
-                    color = '#dc3545'; // Red for exploited
+                    color = '#ef4444'; // Red for exploited
                 } else {
-                    if (plane.type === 'bio') color = '#dc3545';
-                    else if (plane.type === 'cyber') color = '#06b6d4';
+                    if (plane.type === 'bio') color = '#ef4444';
+                    else if (plane.type === 'cyber') color = '#3b82f6';
                     else color = '#f59e0b';
                 }
                 
                 // Enhanced plane drawing with better visuals
-                const planeSize = 12 + (plane.severity || 0) * 2; // Size based on severity
+                const baseSize = 14;
+                const planeSize = baseSize + (plane.severity || 0) * 2.5; // Size based on severity
                 
                 // Draw glow effect for active planes
                 if (!plane.destroyed && !plane.reached) {
-                    this.ctx.shadowBlur = 15;
+                    this.ctx.shadowBlur = 20;
                     this.ctx.shadowColor = color;
                 }
                 
-                // Draw plane body (triangle shape)
+                // Draw plane body (improved triangle shape)
                 this.ctx.fillStyle = color;
                 this.ctx.beginPath();
                 this.ctx.moveTo(0, -planeSize);
-                this.ctx.lineTo(-planeSize * 0.6, planeSize * 0.5);
-                this.ctx.lineTo(0, planeSize * 0.3);
-                this.ctx.lineTo(planeSize * 0.6, planeSize * 0.5);
+                this.ctx.lineTo(-planeSize * 0.65, planeSize * 0.6);
+                this.ctx.lineTo(0, planeSize * 0.35);
+                this.ctx.lineTo(planeSize * 0.65, planeSize * 0.6);
                 this.ctx.closePath();
                 this.ctx.fill();
                 
-                // Draw plane outline
+                // Draw plane outline with better contrast
                 this.ctx.strokeStyle = '#ffffff';
-                this.ctx.lineWidth = 1.5;
+                this.ctx.lineWidth = 2;
                 this.ctx.stroke();
                 
-                // Draw trail (longer and more visible)
+                // Draw inner highlight
+                this.ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                this.ctx.beginPath();
+                this.ctx.moveTo(0, -planeSize * 0.7);
+                this.ctx.lineTo(-planeSize * 0.3, planeSize * 0.2);
+                this.ctx.lineTo(0, planeSize * 0.1);
+                this.ctx.lineTo(planeSize * 0.3, planeSize * 0.2);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                // Draw trail (longer and more visible with gradient)
                 if (!plane.destroyed && !plane.reached) {
-                    const trailLength = 30 + plane.severity * 5;
-                    this.ctx.strokeStyle = color + 'CC';
-                    this.ctx.lineWidth = 3;
-                    this.ctx.shadowBlur = 10;
+                    const trailLength = 35 + plane.severity * 6;
+                    const gradient = this.ctx.createLinearGradient(0, -planeSize, 0, -planeSize - trailLength);
+                    gradient.addColorStop(0, color + 'FF');
+                    gradient.addColorStop(0.5, color + 'AA');
+                    gradient.addColorStop(1, color + '00');
+                    
+                    this.ctx.strokeStyle = gradient;
+                    this.ctx.lineWidth = 4;
+                    this.ctx.shadowBlur = 12;
                     this.ctx.shadowColor = color;
                     this.ctx.beginPath();
                     this.ctx.moveTo(0, -planeSize);
@@ -517,24 +695,27 @@
                     this.ctx.shadowBlur = 0;
                 }
                 
-                // Draw severity indicator (pulsing dot)
+                // Draw severity indicator (enhanced pulsing dot)
                 if (plane.severity > 0 && !plane.destroyed && !plane.reached) {
-                    const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+                    const pulse = Math.sin(Date.now() / 180) * 0.25 + 0.75;
                     this.ctx.fillStyle = `rgba(255, 255, 255, ${pulse})`;
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.shadowColor = '#ffffff';
                     this.ctx.beginPath();
-                    this.ctx.arc(0, -planeSize - 5, 3, 0, Math.PI * 2);
+                    this.ctx.arc(0, -planeSize - 6, 4, 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
                 }
                 
                 this.ctx.restore();
             }
             
             handlePlaneReached(plane) {
-                // Check if plane is in wrong zone (tripped wrong zone)
+                // Check if plane is in correct zone
                 const zones = {
-                    bio: { x: window.innerWidth * 0.2, y: window.innerHeight * 0.2, radius: 120 },
-                    cyber: { x: window.innerWidth * 0.8, y: window.innerHeight * 0.2, radius: 120 },
-                    social: { x: window.innerWidth * 0.5, y: window.innerHeight * 0.8, radius: 120 }
+                    bio: { x: window.innerWidth * 0.2, y: window.innerHeight * 0.2, radius: 140 },
+                    cyber: { x: window.innerWidth * 0.8, y: window.innerHeight * 0.2, radius: 140 },
+                    social: { x: window.innerWidth * 0.5, y: window.innerHeight * 0.8, radius: 140 }
                 };
                 
                 const currentZone = Object.keys(zones).find(zone => {
@@ -543,39 +724,49 @@
                     return dist < z.radius;
                 });
                 
-                const wrongZone = currentZone !== plane.type;
+                const wrongZone = currentZone && currentZone !== plane.type;
                 
                 if (plane.isJailbroken) {
                     // Exploited - plane passed through with visual effect
                     this.stats.exploited++;
                     this.stats.active--;
                     
-                    // Create success visual (green flash)
+                    // Update average severity for JVI calculation
+                    if (!this.stats.totalSeverity) this.stats.totalSeverity = 0;
+                    if (!this.stats.exploitCount) this.stats.exploitCount = 0;
+                    this.stats.totalSeverity += plane.severity || 0;
+                    this.stats.exploitCount++;
+                    this.stats.avgSeverity = this.stats.totalSeverity / this.stats.exploitCount;
+                    
+                    // Create success visual
                     this.createExplosion(plane.x, plane.y, 'exploited');
-                    this.showMessage(plane.x, plane.y, 'EXPLOITED!', 'exploited', `${plane.strategy} (Severity: ${plane.severity}/5)`);
+                    const strategyName = plane.strategy || 'Unknown';
+                    const severity = plane.severity || 0;
+                    this.showMessage(plane.x, plane.y, 'EXPLOITED', 'exploited', `${strategyName} | Severity: ${severity}/5`);
                     
                     if (wrongZone) {
-                        this.showMessage(plane.x, plane.y - 40, 'WRONG ZONE!', 'warning', `Tripped in ${currentZone} zone`);
+                        this.showMessage(plane.x, plane.y - 50, 'ZONE MISMATCH', 'warning', `Detected in ${currentZone} zone`);
                     }
                     
                     // Remove plane after brief delay
                     setTimeout(() => {
                         const idx = this.planes.findIndex(p => p.id === plane.id);
                         if (idx >= 0) this.planes.splice(idx, 1);
-                    }, 2000);
+                    }, 2500);
                 } else {
                     // Blocked - plane shot down with explosion
                     plane.destroyed = true;
                     this.stats.blocked++;
                     this.stats.active--;
                     this.createExplosion(plane.x, plane.y, 'blocked');
-                    this.showMessage(plane.x, plane.y, 'BLOCKED', 'blocked', plane.strategy);
+                    const strategyName = plane.strategy || 'Unknown';
+                    this.showMessage(plane.x, plane.y, 'BLOCKED', 'blocked', strategyName);
                     
                     // Remove plane after explosion
                     setTimeout(() => {
                         const idx = this.planes.findIndex(p => p.id === plane.id);
                         if (idx >= 0) this.planes.splice(idx, 1);
-                    }, 1000);
+                    }, 1200);
                 }
                 
                 this.updateStats();
@@ -608,26 +799,39 @@
             
             drawExplosion(explosion) {
                 const alpha = 1 - explosion.age;
-                const color = explosion.type === 'exploited' ? '#dc3545' : '#22c55e';
+                const color = explosion.type === 'exploited' ? '#ef4444' : '#22c55e';
                 
                 this.ctx.save();
                 this.ctx.globalAlpha = alpha;
                 
+                // Enhanced particle effects
                 explosion.particles.forEach(particle => {
-                    const px = explosion.x + Math.cos(particle.angle) * particle.speed * explosion.age * 50;
-                    const py = explosion.y + Math.sin(particle.angle) * particle.speed * explosion.age * 50;
+                    const px = explosion.x + Math.cos(particle.angle) * particle.speed * explosion.age * 60;
+                    const py = explosion.y + Math.sin(particle.angle) * particle.speed * explosion.age * 60;
                     
+                    // Particle with glow
                     this.ctx.fillStyle = color;
+                    this.ctx.shadowBlur = 8;
+                    this.ctx.shadowColor = color;
                     this.ctx.beginPath();
-                    this.ctx.arc(px, py, particle.size * (1 - explosion.age), 0, Math.PI * 2);
+                    this.ctx.arc(px, py, particle.size * (1 - explosion.age * 0.7), 0, Math.PI * 2);
                     this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
                 });
                 
-                // Draw central flash
-                this.ctx.fillStyle = color;
-                this.ctx.beginPath();
-                this.ctx.arc(explosion.x, explosion.y, 15 * (1 - explosion.age), 0, Math.PI * 2);
-                this.ctx.fill();
+                // Draw central flash with multiple rings
+                const ringCount = 3;
+                for (let i = 0; i < ringCount; i++) {
+                    const ringAlpha = alpha * (1 - i / ringCount) * 0.6;
+                    const ringSize = (15 + i * 8) * (1 - explosion.age);
+                    this.ctx.fillStyle = color + Math.floor(ringAlpha * 255).toString(16).padStart(2, '0');
+                    this.ctx.shadowBlur = 15 - i * 3;
+                    this.ctx.shadowColor = color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(explosion.x, explosion.y, ringSize, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                this.ctx.shadowBlur = 0;
                 
                 this.ctx.restore();
             }
