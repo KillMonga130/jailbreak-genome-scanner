@@ -7,9 +7,9 @@ pydantic-settings>=2.0.0
 httpx>=0.25.0
 aiohttp>=3.9.0
 
-# LLM APIs
-openai>=1.12.0
-anthropic>=0.18.0
+# LLM APIs (Modal.com handles inference, no direct API clients needed)
+# openai>=1.12.0  # Removed - using Modal.com instead
+# anthropic>=0.18.0  # Removed - using Modal.com instead
 cohere>=4.47
 
 # Local models

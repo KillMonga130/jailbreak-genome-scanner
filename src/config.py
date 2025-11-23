@@ -29,26 +29,7 @@ class Settings(BaseSettings):
         default="jailbreak-genome-scanner/1.0", alias="REDDIT_USER_AGENT"
     )
     
-    # OpenAI
-    openai_api_key: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
-    
-    # Anthropic
-    anthropic_api_key: Optional[str] = Field(default=None, alias="ANTHROPIC_API_KEY")
-    
-    # Lambda Cloud
-    lambda_api_key: Optional[str] = Field(default=None, alias="LAMBDA_API_KEY")
-    lambda_default_instance_type: str = Field(
-        default="gpu_1x_a10", alias="LAMBDA_DEFAULT_INSTANCE_TYPE"
-    )
-    lambda_default_region: str = Field(
-        default="us-east-1", alias="LAMBDA_DEFAULT_REGION"
-    )
-    lambda_use_default_firewall: bool = Field(
-        default=True, alias="LAMBDA_USE_DEFAULT_FIREWALL"
-    )
-    lambda_filesystem_id: Optional[str] = Field(
-        default=None, alias="LAMBDA_FILESYSTEM_ID"
-    )
+    # Lambda Cloud removed - no longer used
     
     # Modal.com
     modal_api_key: Optional[str] = Field(default=None, alias="MODAL_API_KEY")

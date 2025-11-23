@@ -4,7 +4,8 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import re
 
-from src.integrations.lambda_scraper import LambdaWebScraper, ScrapedEvent
+# Lambda scraper removed - intelligence gathering disabled
+# from src.integrations.lambda_scraper import LambdaWebScraper, ScrapedEvent
 from src.intelligence.pattern_database import ExploitPatternDatabase, ExploitPattern
 from src.defense.adaptive_engine import AdaptiveDefenseEngine, DefenseRule
 from src.models.jailbreak import AttackStrategy, SeverityLevel
@@ -25,7 +26,7 @@ class ThreatIntelligenceEngine:
     def __init__(
         self,
         pattern_database: Optional[ExploitPatternDatabase] = None,
-        scraper: Optional[LambdaWebScraper] = None,
+        scraper: Optional[Any] = None,  # Lambda scraper removed
         adaptive_engine: Optional[AdaptiveDefenseEngine] = None
     ):
         """
@@ -33,7 +34,7 @@ class ThreatIntelligenceEngine:
         
         Args:
             pattern_database: ExploitPatternDatabase instance
-            scraper: LambdaWebScraper instance
+            scraper: Deprecated - Lambda scraper removed
             adaptive_engine: AdaptiveDefenseEngine instance
         """
         if pattern_database is None:
@@ -42,11 +43,11 @@ class ThreatIntelligenceEngine:
         else:
             self.pattern_database = pattern_database
         
-        self.scraper = scraper
+        self.scraper = None  # Lambda scraper removed
         self.adaptive_engine = adaptive_engine or AdaptiveDefenseEngine(pattern_database=self.pattern_database)
         
         # Intelligence cache
-        self.recent_intelligence: List[ScrapedEvent] = []
+        self.recent_intelligence: List[Any] = []  # ScrapedEvent removed
         self.last_update: Optional[datetime] = None
         
         log.info("Threat Intelligence Engine initialized")
@@ -122,13 +123,13 @@ class ThreatIntelligenceEngine:
     
     def _extract_patterns_from_event(
         self,
-        event: ScrapedEvent
+        event: Any  # ScrapedEvent removed
     ) -> List[ExploitPattern]:
         """
         Extract exploit patterns from scraped event.
         
         Args:
-            event: ScrapedEvent to analyze
+            event: Event object (ScrapedEvent removed, using Any)
             
         Returns:
             List of ExploitPattern objects
@@ -136,8 +137,12 @@ class ThreatIntelligenceEngine:
         patterns = []
         
         # Try to extract prompt patterns from content
-        content = event.content.lower()
-        title = event.title.lower()
+        # Handle case where event might not have expected attributes
+        if not hasattr(event, 'content') or not hasattr(event, 'title'):
+            return patterns
+        
+        content = getattr(event, 'content', '').lower()
+        title = getattr(event, 'title', '').lower()
         
         # Detect strategy from content
         strategy = self._detect_strategy_from_content(content, title)
@@ -152,8 +157,8 @@ class ThreatIntelligenceEngine:
             
             # Create pattern (without embedding - would need to generate)
             pattern = ExploitPattern(
-                id=f"intel_{event.url}_{len(patterns)}",
-                timestamp=event.timestamp,
+                id=f"intel_{getattr(event, 'url', 'unknown')}_{len(patterns)}",
+                timestamp=getattr(event, 'timestamp', datetime.now()),
                 attack_strategy=strategy,
                 prompt_pattern=prompt_text,
                 embedding=None,  # Would generate embedding here
@@ -162,9 +167,9 @@ class ThreatIntelligenceEngine:
                 violation_domains=self._detect_violation_domains(content),
                 metadata={
                     "source": "threat_intelligence",
-                    "event_title": event.title,
-                    "event_url": event.url,
-                    "relevance_score": event.relevance_score
+                    "event_title": getattr(event, 'title', ''),
+                    "event_url": getattr(event, 'url', ''),
+                    "relevance_score": getattr(event, 'relevance_score', 0.5)
                 },
                 obfuscation_level=self._detect_obfuscation_level(prompt_text),
                 attack_cost=1.0  # Default, would analyze if available
@@ -276,7 +281,7 @@ class ThreatIntelligenceEngine:
     
     def generate_test_cases(
         self,
-        events: Optional[List[ScrapedEvent]] = None
+        events: Optional[List[Any]] = None  # ScrapedEvent removed
     ) -> List[str]:
         """
         Generate test cases from real-world events.
@@ -299,12 +304,14 @@ class ThreatIntelligenceEngine:
         log.info(f"Generated {len(test_cases)} test cases from {len(events)} events")
         return test_cases
     
-    def _generate_test_cases(self, event: ScrapedEvent) -> List[str]:
+    def _generate_test_cases(self, event: Any) -> List[str]:  # ScrapedEvent removed
         """Generate test cases from a single event."""
         test_cases = []
         
         # Extract prompts from event
-        prompts = self._extract_example_prompts(event.content)
+        if not hasattr(event, 'content'):
+            return test_cases
+        prompts = self._extract_example_prompts(getattr(event, 'content', ''))
         test_cases.extend(prompts)
         
         # Generate variations if we have a base prompt
@@ -331,11 +338,11 @@ class ThreatIntelligenceEngine:
             ]),
             "recent_events": [
                 {
-                    "title": e.title,
-                    "source": e.source,
-                    "url": e.url,
-                    "timestamp": e.timestamp.isoformat(),
-                    "relevance": e.relevance_score
+                    "title": getattr(e, 'title', 'Unknown'),
+                    "source": getattr(e, 'source', 'Unknown'),
+                    "url": getattr(e, 'url', ''),
+                    "timestamp": getattr(e, 'timestamp', datetime.now()).isoformat() if hasattr(getattr(e, 'timestamp', None), 'isoformat') else str(getattr(e, 'timestamp', datetime.now())),
+                    "relevance": getattr(e, 'relevance_score', 0.5)
                 }
                 for e in self.recent_intelligence[:10]
             ]
@@ -405,13 +412,15 @@ class ThreatIntelligenceEngine:
         prompts_added = 0
         for event in self.recent_intelligence:
             # Extract prompts from event content
-            prompts = self._extract_example_prompts(event.content)
+            if not hasattr(event, 'content'):
+                continue
+            prompts = self._extract_example_prompts(getattr(event, 'content', ''))
             
             for prompt_text in prompts:
                 # Determine strategy
                 strategy = self._map_strategy_to_db_name(self._detect_strategy_from_content(
-                    event.content.lower(),
-                    event.title.lower()
+                    getattr(event, 'content', '').lower(),
+                    getattr(event, 'title', '').lower()
                 ))
                 
                 # Determine difficulty (simple heuristic)
@@ -423,12 +432,12 @@ class ThreatIntelligenceEngine:
                         prompt_text=prompt_text,
                         strategy=strategy,
                         difficulty=difficulty,
-                        rationale=f"Discovered from {event.source}: {event.title}",
-                        source=f"scraped_{event.source.lower()}",
+                        rationale=f"Discovered from {getattr(event, 'source', 'unknown')}: {getattr(event, 'title', 'Unknown')}",
+                        source=f"scraped_{getattr(event, 'source', 'unknown').lower()}",
                         metadata={
-                            "url": event.url,
-                            "timestamp": event.timestamp.isoformat(),
-                            "relevance_score": event.relevance_score
+                            "url": getattr(event, 'url', ''),
+                            "timestamp": getattr(event, 'timestamp', datetime.now()).isoformat() if hasattr(getattr(event, 'timestamp', None), 'isoformat') else str(getattr(event, 'timestamp', datetime.now())),
+                            "relevance_score": getattr(event, 'relevance_score', 0.5)
                         }
                     )
                     prompts_added += 1

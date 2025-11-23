@@ -16,11 +16,9 @@ class LLMAttacker:
     def __init__(
         self,
         model_name: str,
-        model_type: str = "local",
-        api_key: Optional[str] = None,
-        use_lambda: bool = False,
-        lambda_instance_id: Optional[str] = None,
-        lambda_api_endpoint: Optional[str] = None,
+        model_type: str = "modal",
+        api_endpoint: Optional[str] = None,
+        mock_mode: bool = False,
         **kwargs
     ):
         """
@@ -28,27 +26,21 @@ class LLMAttacker:
         
         Args:
             model_name: Name of the model (e.g., "mistralai/Mistral-7B-Instruct-v0.2")
-            model_type: Type of model provider ("openai", "anthropic", "local", etc.)
-            api_key: API key for the model provider
-            use_lambda: Whether to use Lambda Cloud instance
-            lambda_instance_id: Lambda Cloud instance ID
-            lambda_api_endpoint: Lambda Cloud API endpoint (e.g., "http://localhost:8000/v1/chat/completions")
+            model_type: Type of model provider ("modal" or "mock")
+            api_endpoint: Modal.com API endpoint URL
+            mock_mode: If True, use mock defender for testing
             **kwargs: Additional model-specific parameters
         """
         self.model_name = model_name
         self.model_type = model_type
-        self.use_lambda = use_lambda
-        self.lambda_instance_id = lambda_instance_id
-        self.lambda_api_endpoint = lambda_api_endpoint
+        self.api_endpoint = api_endpoint
         
         # Use LLMDefender infrastructure for making API calls
         self.llm_client = LLMDefender(
             model_name=model_name,
             model_type=model_type,
-            api_key=api_key,
-            use_lambda=use_lambda,
-            lambda_instance_id=lambda_instance_id,
-            lambda_api_endpoint=lambda_api_endpoint,
+            api_endpoint=api_endpoint,
+            mock_mode=mock_mode,
             **kwargs
         )
         
@@ -81,31 +73,13 @@ class LLMAttacker:
         
         # Generate attack prompt using the LLM
         try:
-            # Use chat format if supported
-            if self.model_type in ["openai", "anthropic", "local"]:
-                # For chat models, use conversation format
-                messages = [
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
-                
-                # Call the LLM
-                response = await self.llm_client.generate_response(
-                    prompt=user_prompt,
-                    system_prompt=system_prompt,
-                    **kwargs
-                )
-                
-                # Extract the attack prompt from response
-                attack_prompt = self._extract_attack_prompt(response, strategy)
-                log.debug(f"Generated attack prompt using {strategy.value}: {attack_prompt[:100]}...")
-                return attack_prompt
-            else:
-                # Fallback for non-chat models
-                full_prompt = f"{system_prompt}\n\n{user_prompt}"
-                response = await self.llm_client.generate_response(full_prompt, **kwargs)
-                attack_prompt = self._extract_attack_prompt(response, strategy)
-                return attack_prompt
+            # For Modal and Mock models, use conversation format
+            # Combine system and user prompts for Modal (which supports chat format)
+            full_prompt = f"{system_prompt}\n\n{user_prompt}"
+            response = await self.llm_client.generate_response(full_prompt, **kwargs)
+            attack_prompt = self._extract_attack_prompt(response, strategy)
+            log.debug(f"Generated attack prompt using {strategy.value}: {attack_prompt[:100]}...")
+            return attack_prompt
                 
         except Exception as e:
             log.error(f"Error generating attack prompt: {e}")
@@ -226,8 +200,7 @@ class LLMAttacker:
             metadata={
                 "model_name": self.model_name,
                 "model_type": self.model_type,
-                "use_lambda": self.use_lambda,
-                "lambda_instance_id": self.lambda_instance_id,
+                "api_endpoint": self.api_endpoint,
                 "attacker_type": "llm_based"
             }
         )

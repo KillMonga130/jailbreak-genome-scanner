@@ -76,17 +76,13 @@ class JailbreakArena:
         if kwargs.get("enable_threat_intelligence", False):
             try:
                 from src.intelligence.threat_intelligence import ThreatIntelligenceEngine
-                from src.integrations.lambda_scraper import LambdaWebScraper
-                
-                scraper = None
-                if kwargs.get("scraper_instance_id"):
-                    scraper = LambdaWebScraper(instance_id=kwargs.get("scraper_instance_id"))
+                # Lambda scraper removed
                 
                 self.threat_intelligence = ThreatIntelligenceEngine(
                     pattern_database=self.pattern_database,
-                    scraper=scraper
+                    scraper=None  # Lambda scraper removed
                 )
-                log.info("Threat intelligence engine enabled")
+                log.info("Threat intelligence engine enabled (scraper disabled)")
             except ImportError:
                 log.warning("Threat intelligence module not available")
         

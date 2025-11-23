@@ -37,7 +37,7 @@ from src.arena.jailbreak_arena import JailbreakArena
 from src.defenders.llm_defender import LLMDefender
 from src.attackers.prompt_generator import PromptGenerator
 from src.models.jailbreak import AttackStrategy, EvaluationResult, SeverityLevel
-from src.integrations.lambda_scraper import LambdaWebScraper
+# Lambda scraper removed - intelligence gathering disabled
 from src.intelligence.threat_intelligence import ThreatIntelligenceEngine
 from src.scoring.jvi_calculator import JVICalculator
 from src.visualization.vector3d_generator import Vector3DGenerator
@@ -878,7 +878,10 @@ def make_json_serializable(obj):
         return obj
 
 
+# Lambda scraper removed - function disabled
 async def gather_recent_attacks(scraper, instance_id=None):
+    # Lambda scraper removed - returning empty
+    return None
     """Use Lambda scraper to gather recent attack patterns for intelligence gathering."""
     if not scraper:
         return None
@@ -926,87 +929,7 @@ def main():
     """, unsafe_allow_html=True)
     st.markdown('<p style="text-align: center; color: #999999; margin-top: -1rem;">Active Defense Infrastructure - Automated Red-Teaming & Threat Radar</p>', unsafe_allow_html=True)
     
-    # Load deployment config if available (for pre-filling)
-    import json
-    from pathlib import Path
-    deployment_config_path = Path("data/lambda_deployments.json")
-    instance_discovery_path = Path("data/instance_discovery.json")
-    default_model = "microsoft/phi-2"
-    default_instance = ""
-    default_endpoint = ""
-    
-    # Load instance discovery data to check which instances need SSH tunnels
-    instance_access_info = {}
-    if instance_discovery_path.exists():
-        try:
-            with open(instance_discovery_path, 'r') as f:
-                discovery_data = json.load(f)
-                for inst in discovery_data:
-                    instance_id = inst.get("instance_id")
-                    if instance_id:
-                        instance_access_info[instance_id] = {
-                            "direct_api": inst.get("access", {}).get("direct_api", True),
-                            "ssh_tunnel_needed": inst.get("access", {}).get("ssh_tunnel_needed", False),
-                            "ssh_tunnel_endpoint": inst.get("endpoints", {}).get("ssh_tunnel", "")
-                        }
-        except Exception as e:
-            log.debug(f"Error loading instance discovery: {e}")
-    
-    # Load all active instances (for scraper)
-    active_instances = []
-    # Load deployed models (instances with actual models running)
-    deployed_models = []
-    
-    if deployment_config_path.exists():
-        try:
-            with open(deployment_config_path, 'r') as f:
-                config = json.load(f)
-                deployed = config.get("deployed_models", {})
-                # Get all active instances (for scraper - includes all active instances)
-                active_instances = [
-                    {
-                        "key": key,
-                        "name": key.replace("-", " ").title(),
-                        "model_name": info.get("model_name", ""),
-                        "instance_id": info.get("instance_id", ""),
-                        "instance_ip": info.get("instance_ip", ""),
-                        "instance_type": info.get("instance_type", ""),
-                        "api_endpoint": info.get("api_endpoint", ""),
-                        "api_endpoint_local": info.get("api_endpoint_local", ""),
-                        "vllm_running": info.get("vllm_running", False),
-                        "status": info.get("status", "unknown")
-                    }
-                    for key, info in deployed.items()
-                    if info.get("status") == "active"
-                ]
-                
-                # Get deployed models (instances with vLLM running and model_name)
-                deployed_models = [
-                    inst for inst in active_instances
-                    if inst.get("vllm_running", False) and inst.get("model_name", "")
-                ]
-                # For model selection, use deployed_models (instances with actual models)
-                if deployed_models:
-                    # Prioritize H100 instances with models (the big one!)
-                    h100_models = [inst for inst in deployed_models if "h100" in inst.get("instance_type", "").lower() or "h100" in inst.get("key", "").lower()]
-                    
-                    if h100_models:
-                        # Use H100 model as default (the big one!)
-                        first = h100_models[0]
-                        log.info(f"Auto-selected H100 model instance: {first.get('instance_id')}")
-                    else:
-                        # Use first deployed model
-                        first = deployed_models[0]
-                    
-                    default_model = first.get("model_name", "microsoft/phi-2")
-                    default_instance = first.get("instance_id", "")
-                    # Prefer direct IP endpoint (more reliable), fall back to localhost if available
-                    # Direct IP works if port is open, localhost only works if SSH tunnel is active
-                    default_endpoint = first.get("api_endpoint") or first.get("api_endpoint_local", "")
-                    if not default_endpoint and first.get("instance_ip"):
-                        default_endpoint = f"http://{first.get('instance_ip')}:8000/v1/chat/completions"
-        except Exception as e:
-            log.debug(f"Error loading deployment config: {e}")
+    # Lambda Cloud deployment config removed - no longer used
     
     # Sidebar configuration
     with st.sidebar:
@@ -1014,11 +937,64 @@ def main():
         
         # Model selection
         st.subheader("Defender Setup")
-        defender_type = st.selectbox(
-            "Defender Type",
-            ["Mock (Demo)", "OpenAI", "Anthropic", "Lambda Cloud", "Modal.com"],
-            help="Choose your defender model type. Modal.com = Pay-per-use serverless (recommended for cost savings)"
-        )
+        
+        # Check if Modal is deployed
+        from src.config import Settings
+        import os
+        from dotenv import load_dotenv
+        load_dotenv(project_root / ".env", override=True)
+        current_settings = Settings()
+        modal_endpoint = current_settings.modal_chat_endpoint or current_settings.modal_endpoint or os.getenv("MODAL_ENDPOINT_CHAT")
+        
+        # Show deployment screen if Modal not configured
+        if not modal_endpoint:
+            st.info("🚀 Welcome! Let's set up Modal.com")
+            st.markdown("""
+            <div style="padding: 1rem; background: rgba(6, 182, 212, 0.1); border-left: 4px solid #06b6d4; border-radius: 8px; margin: 1rem 0;">
+                <strong style="color: #06b6d4;">💰 Cost Savings:</strong> 
+                <span style="color: #86efac;">60-80% reduction vs. traditional cloud instances</span><br>
+                <strong style="color: #06b6d4;">⚡ Benefits:</strong> 
+                <span style="color: #86efac;">Pay-per-second, auto-scaling, no idle costs</span>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            if st.button("🚀 Deploy to Modal.com", type="primary", use_container_width=True):
+                with st.spinner("Deploying to Modal.com..."):
+                    import subprocess
+                    import sys
+                    try:
+                        # Run modal deploy
+                        result = subprocess.run(
+                            [sys.executable, "-m", "modal", "deploy", "modal_deploy.py"],
+                            capture_output=True,
+                            text=True,
+                            timeout=300
+                        )
+                        if result.returncode == 0:
+                            st.success("✅ Deployment successful! Check Modal dashboard for endpoint URL.")
+                            st.info("💡 Copy the endpoint URL and set it in your .env file as MODAL_ENDPOINT_CHAT")
+                        else:
+                            st.error(f"❌ Deployment failed: {result.stderr}")
+                            st.code(result.stdout + result.stderr)
+                    except subprocess.TimeoutExpired:
+                        st.warning("⏱️ Deployment is taking longer than expected. Check Modal dashboard for status.")
+                    except Exception as e:
+                        st.error(f"❌ Error deploying: {e}")
+                        st.info("💡 You can also deploy manually: `modal deploy modal_deploy.py`")
+            
+            st.markdown("---")
+            st.markdown("**Or use Mock mode for testing:**")
+            defender_type = st.selectbox(
+                "Defender Type",
+                ["Mock (Demo)", "Modal.com"],
+                help="Modal.com = Pay-per-use serverless (recommended). Mock = Testing without API costs."
+            )
+        else:
+            defender_type = st.selectbox(
+                "Defender Type",
+                ["Modal.com", "Mock (Demo)"],
+                help="Modal.com = Pay-per-use serverless (recommended). Mock = Testing without API costs."
+            )
         
         # Initialize model_name to None (will be set by each defender type)
         model_name = None
@@ -1054,7 +1030,13 @@ def main():
             # Show model info
             model_info = get_model_info(modal_selected_model)
             if model_info:
-                st.info(f"📦 **{modal_selected_model}** ({model_info.get('size', 'Unknown')}) - {model_info.get('description', '')}")
+                description = model_info.get('description', '')
+                # Remove redundant model name from description if present
+                if modal_selected_model in description:
+                    description = description.replace(modal_selected_model, '').strip(' -')
+                size = model_info.get('size', 'Unknown')
+                gpu = model_info.get('recommended_gpu', 'A10G')
+                st.info(f"📦 **{size}** parameters | {description} | GPU: {gpu}")
                 model_name = get_model_id(modal_selected_model)
             else:
                 model_name = modal_selected_model
@@ -1063,267 +1045,63 @@ def main():
             st.session_state[saved_model_key] = modal_selected_model
             st.markdown("---")
         
-        if defender_type == "OpenAI":
-            st.info("💡 **Note**: For Lambda Cloud credits, use 'Lambda Cloud' option with open-source models instead")
-            model_name = st.text_input("Model Name", "gpt-4")
-            api_key = st.text_input("OpenAI API Key", type="password")
-            instance_id = None
-            api_endpoint = None
-        elif defender_type == "Anthropic":
-            st.info("💡 **Note**: For Lambda Cloud credits, use 'Lambda Cloud' option with open-source models instead")
-            model_name = st.text_input("Model Name", "claude-3-opus")
-            api_key = st.text_input("Anthropic API Key", type="password")
-            instance_id = None
-            api_endpoint = None
-        elif defender_type == "Lambda Cloud":
-            # Show model selector - only deployed models (instances with vLLM running)
-            if deployed_models:
-                # Prioritize H100 instances with models
-                h100_instances = [inst for inst in deployed_models if "h100" in inst.get("instance_type", "").lower() or "h100" in inst.get("key", "").lower()]
-                other_instances = [inst for inst in deployed_models if inst not in h100_instances]
-                
-                # Build options with H100 first, marked as "THE BIG ONE"
-                instance_options = {}
-                
-                # Add H100 instances first with special label
-                for inst in h100_instances:
-                    label = f"🚀 {inst['name']} - H100 ({inst['model_name'].split('/')[-1]}) - THE BIG ONE!"
-                    instance_options[label] = inst
-                
-                # Add other instances
-                for inst in other_instances:
-                    label = f"{inst['name']} ({inst['model_name'].split('/')[-1]})"
-                    instance_options[label] = inst
-                
-                instance_options["Custom Instance"] = None
-                
-                # Default to H100 if available
-                default_index = 0 if h100_instances else 0
-                
-                selected_instance_label = st.selectbox(
-                    "Select Instance",
-                    list(instance_options.keys()),
-                    index=default_index,
-                    help="🚀 H100 instances are THE BIG ONE - fastest GPU available! Choose from deployed instances or configure custom"
+        if defender_type == "Modal.com":
+            # Get Modal endpoint from config - reload settings to get latest .env values
+            from src.config import Settings
+            import os
+            # Force reload of .env
+            from dotenv import load_dotenv
+            load_dotenv(project_root / ".env", override=True)
+            # Create fresh settings instance
+            current_settings = Settings()
+            modal_endpoint = current_settings.modal_chat_endpoint or current_settings.modal_endpoint or os.getenv("MODAL_ENDPOINT_CHAT")
+            
+            # Model selector already shown at top - use that selection
+            # Get the selected model from session state (set at top)
+            saved_model_key = "modal_selected_model"
+            if saved_model_key in st.session_state:
+                from src.integrations.modal_models import get_model_id
+                model_name = get_model_id(st.session_state[saved_model_key])
+            else:
+                # Fallback if not set
+                from src.integrations.modal_models import get_model_list, get_model_id
+                available_models = get_model_list()
+                model_name = get_model_id(available_models[0])  # Default to first
+            
+            # Endpoint configuration
+            if modal_endpoint:
+                st.success(f"✅ **Endpoint configured**")
+                api_endpoint = st.text_input(
+                    "Modal Endpoint",
+                    value=modal_endpoint,
+                    help="Modal.com endpoint URL (from deployment)",
+                    label_visibility="collapsed"
                 )
-                
-                selected_instance = instance_options[selected_instance_label]
-                
-                if selected_instance:
-                    # Auto-fill from selected instance
-                    instance_type_display = ""
-                    if "h100" in selected_instance.get("instance_type", "").lower() or "h100" in selected_instance.get("key", "").lower():
-                        instance_type_display = " - H100 THE BIG ONE! 🚀"
-                    
-                    model_name = st.text_input("Model Name", value=selected_instance["model_name"], disabled=True)
-                    instance_id = st.text_input(
-                        f"Lambda Instance ID{instance_type_display}", 
-                        value=selected_instance["instance_id"], 
-                        disabled=True
-                    )
-                    
-                    # Check instance status via Lambda API
-                    instance_status = selected_instance.get("status", "unknown")
-                    if instance_status == "active":
-                        if selected_instance.get("vllm_running"):
-                            st.success(f"✅ vLLM is running on {selected_instance['instance_ip']}")
-                        else:
-                            st.warning(f"⚠️ vLLM status unknown for {selected_instance['instance_ip']}")
-                    elif instance_status in ["stopped", "terminated"]:
-                        st.error(f"❌ Instance is {instance_status}. Please start it in Lambda Cloud dashboard before use.")
-                        st.info("💡 **Cost Tip**: Instances only charge when running. Stop them when not in use!")
-                    else:
-                        st.warning(f"⚠️ Instance status: {instance_status}")
-                    
-                    # Show endpoint options - check if SSH tunnel is needed
-                    instance_id = selected_instance.get("instance_id", "")
-                    access_info = instance_access_info.get(instance_id, {})
-                    needs_tunnel = access_info.get("ssh_tunnel_needed", False)
-                    direct_api_works = access_info.get("direct_api", True)
-                    
-                    primary_endpoint = selected_instance.get("api_endpoint") or ""
-                    local_endpoint = selected_instance.get("api_endpoint_local") or ""
-                    discovery_tunnel_endpoint = access_info.get("ssh_tunnel_endpoint", "")
-                    
-                    # Prefer SSH tunnel endpoint if direct API doesn't work
-                    if needs_tunnel or not direct_api_works:
-                        # Use SSH tunnel endpoint
-                        tunnel_endpoint = local_endpoint or discovery_tunnel_endpoint
-                        if tunnel_endpoint:
-                            st.warning("⚠️ Port 8000 is blocked - using SSH tunnel endpoint. Make sure SSH tunnel is running!")
-                            api_endpoint = st.text_input(
-                                "API Endpoint",
-                                value=tunnel_endpoint,
-                                help="SSH tunnel endpoint - requires active SSH tunnel"
-                            )
-                            if primary_endpoint and primary_endpoint != tunnel_endpoint:
-                                st.info(f"💡 Direct IP (blocked): `{primary_endpoint}` - Use tunnel endpoint above instead")
-                        else:
-                            # No tunnel endpoint configured, show warning
-                            st.error("⚠️ Port 8000 is blocked but no SSH tunnel endpoint configured!")
-                            st.info(f"Set up SSH tunnel: ssh -i moses.pem -N -L 8001:localhost:8000 ubuntu@{selected_instance.get('instance_ip', '')}")
-                            api_endpoint = st.text_input(
-                                "API Endpoint",
-                                value=local_endpoint or f"http://localhost:8001/v1/chat/completions",
-                                help="SSH tunnel endpoint - set up tunnel first"
-                            )
-                    elif primary_endpoint:
-                        # Direct IP works
-                        api_endpoint = st.text_input(
-                            "API Endpoint",
-                            value=primary_endpoint,
-                            help="vLLM API endpoint (direct IP)"
-                        )
-                        if local_endpoint and "localhost" in local_endpoint:
-                            st.info(f"💡 SSH tunnel alternative: `{local_endpoint}` (optional)")
-                    elif local_endpoint:
-                        # Only local endpoint available
-                        st.warning("⚠️ Only SSH tunnel endpoint available. Make sure SSH tunnel is running!")
-                        api_endpoint = st.text_input(
-                            "API Endpoint",
-                            value=local_endpoint,
-                            help="SSH tunnel endpoint - requires active SSH tunnel"
-                        )
-                    else:
-                        # Fallback: construct from IP
-                        if selected_instance.get("instance_ip"):
-                            default = f"http://{selected_instance['instance_ip']}:8000/v1/chat/completions"
-                            api_endpoint = st.text_input(
-                                "API Endpoint",
-                                value=default,
-                                help="vLLM API endpoint"
-                            )
-                        else:
-                            api_endpoint = st.text_input(
-                                "API Endpoint",
-                                value="",
-                                help="Enter vLLM API endpoint (e.g., http://<ip>:8000/v1/chat/completions)"
-                            )
-                else:
-                    # Custom instance
-                    model_name = st.text_input("Model Name", default_model)
-                    instance_id = st.text_input("Lambda Instance ID", default_instance)
-                    api_endpoint = st.text_input("API Endpoint", default_endpoint)
-            elif defender_type == "Modal.com":
-                st.info("💰 **Pay-per-use**: Only pay when models run (per second). No idle costs!")
+            else:
+                st.warning("⚠️ Modal endpoint not configured")
                 st.markdown("""
                 <div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;">
-                <strong>Modal.com Benefits:</strong><br>
+                <strong>💰 Pay-per-use Benefits:</strong><br>
                 • Pay only when running (per second)<br>
-                • No idle costs (containers auto-shutdown)<br>
-                • Access to multiple models<br>
+                • No idle costs (auto-shutdown after 5 min)<br>
                 • Serverless & auto-scaling
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Get Modal endpoint from config - reload settings to get latest .env values
-                from src.config import Settings
-                import os
-                # Force reload of .env
-                from dotenv import load_dotenv
-                load_dotenv(project_root / ".env", override=True)
-                # Create fresh settings instance
-                current_settings = Settings()
-                modal_endpoint = current_settings.modal_chat_endpoint or current_settings.modal_endpoint or os.getenv("MODAL_ENDPOINT_CHAT")
-                
-                # Model selector already shown at top - use that selection
-                # Get the selected model from session state (set at top)
-                saved_model_key = "modal_selected_model"
-                if saved_model_key in st.session_state:
-                    from src.integrations.modal_models import get_model_id
-                    model_name = get_model_id(st.session_state[saved_model_key])
-                else:
-                    # Fallback if not set
-                    from src.integrations.modal_models import get_model_list, get_model_id
-                    available_models = get_model_list()
-                    model_name = get_model_id(available_models[0])  # Default to first
-                
-                # Endpoint configuration
-                if modal_endpoint:
-                    st.success(f"✅ Modal endpoint configured: {modal_endpoint[:50]}...")
-                    api_endpoint = st.text_input(
-                        "Modal Endpoint",
-                        value=modal_endpoint,
-                        help="Modal.com endpoint URL (from deployment)"
-                    )
-                else:
-                    st.warning("⚠️ Modal endpoint not configured. Deploy first: `modal deploy modal_deploy.py`")
-                    api_endpoint = st.text_input(
-                        "Modal Endpoint",
-                        value="",
-                        placeholder="https://your-username--jailbreak-genome-scanner-chat-completions.modal.run",
-                        help="Enter Modal endpoint URL from deployment"
-                    )
-                    st.info("💡 Get endpoint from Modal dashboard after deploying")
-                
-                # Don't show text input for Modal - use selected model from dropdown
-                instance_id = None  # Not used for Modal
-            else:
-                # No active instances, use manual input
-                model_name = st.text_input("Model Name", default_model)
-                instance_id = st.text_input("Lambda Instance ID", default_instance)
-                api_endpoint = st.text_input("API Endpoint", default_endpoint)
+                api_endpoint = st.text_input(
+                    "Modal Endpoint",
+                    value="",
+                    placeholder="https://your-username--jailbreak-genome-scanner-chat-completions.modal.run",
+                    help="Enter Modal endpoint URL from deployment"
+                )
+                st.info("💡 Deploy first: `modal deploy modal_deploy.py` then get endpoint from Modal dashboard")
             
-            # Get instance IP for display
-            instance_ip = None
-            if active_instances and selected_instance:
-                instance_ip = selected_instance.get("instance_ip")
-            elif instance_id:
-                # Try to get IP from Lambda API if not in config
-                try:
-                    from src.integrations.lambda_cloud import LambdaCloudClient
-                    lambda_client = LambdaCloudClient()
-                    instance = run_async(lambda_client.get_instance_status(instance_id))
-                    if instance and instance.get("ip"):
-                        instance_ip = instance.get("ip")
-                except Exception as e:
-                    log.debug(f"Could not auto-detect IP: {e}")
-            
-            if instance_ip:
-                st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> Instance IP: {instance_ip}</div>', unsafe_allow_html=True)
-                
-                # Check connectivity status
-                if api_endpoint and not api_endpoint.startswith("localhost"):
-                    # Only check external endpoints
-                    from scripts.ssh_tunnel_helper import check_port_connectivity
-                    from urllib.parse import urlparse
-                    try:
-                        parsed = urlparse(api_endpoint)
-                        host = parsed.hostname
-                        port = parsed.port or 8000
-                        if host and host != "localhost":
-                            port_open = check_port_connectivity(host, port, timeout=3.0)
-                            if not port_open:
-                                st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> <strong>Port {port} is blocked!</strong> Cannot connect externally.</div>', unsafe_allow_html=True)
-                                with st.expander('<i class="fas fa-link" style="margin-right: 0.5rem;"></i> Quick Fix: Use SSH Tunnel', expanded=True):
-                                    st.markdown("**Port is blocked by firewall. Use SSH tunnel:**")
-                                    st.code(f"python scripts/ssh_tunnel_helper.py --ip {instance_ip} --key moses.pem", language="bash")
-                                    st.markdown("Then change endpoint to: `http://localhost:8000/v1/chat/completions`")
-                                    st.markdown("**Or configure security group:** Run `python scripts/configure_security_group.py`")
-                    except Exception:
-                        pass  # Skip check if it fails
-                
-                if not api_endpoint or "<ip>" in api_endpoint:
-                    st.markdown('<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> <strong>vLLM not set up yet!</strong> The API endpoint needs to be configured.</div>', unsafe_allow_html=True)
-                    with st.expander("Set up vLLM on Lambda instance", expanded=True):
-                        st.markdown("**Quick Setup:**")
-                        st.code(f"""
-# Run this script to set up vLLM:
-python scripts/setup_vllm_on_lambda.py --ip {instance_ip} --key moses.pem --model {model_name}
-
-# Or manually SSH and run:
-ssh -i moses.pem ubuntu@{instance_ip}
-pip3 install vllm
-python3 -m vllm.entrypoints.openai.api_server \\
-    --model {model_name} \\
-    --port 8000 \\
-    --host 0.0.0.0
-                        """, language="bash")
-                        st.markdown("**After setup, use this endpoint:**")
-                        st.code(f"http://{instance_ip}:8000/v1/chat/completions", language="text")
-                else:
-                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Endpoint configured: {api_endpoint}</div>', unsafe_allow_html=True)
-            api_key = None
+            # Don't show text input for Modal - use selected model from dropdown
+            instance_id = None  # Not used for Modal
+            api_key = None  # Not used for Modal
+        
+        elif defender_type == "Modal.com":
+            # This section already handled above
+            pass
         elif defender_type == "Mock (Demo)":
             model_name = "demo-model-v1"
             api_key = None
@@ -1331,7 +1109,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
             api_endpoint = None
         else:
             # Fallback for unknown defender types
-            model_name = default_model
+            model_name = "demo-model-v1"  # Default to mock
             api_key = None
             instance_id = None
             api_endpoint = None
@@ -1340,6 +1118,22 @@ python3 -m vllm.entrypoints.openai.api_server \\
         st.subheader("Attack Configuration")
         num_attackers = st.slider("Number of Attackers", 3, 10, 5)
         num_rounds = st.slider("Number of Rounds", 1, 50, 10)
+        
+        # Cost estimate (for Modal.com only)
+        if defender_type == "Modal.com":
+            from src.utils.cost_calculator import ModalCostCalculator
+            cost_estimate = ModalCostCalculator.estimate_arena_cost(
+                num_attackers=num_attackers,
+                num_rounds=num_rounds,
+                gpu_type="A10G"
+            )
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.metric("💰 Total Cost", ModalCostCalculator.format_cost(cost_estimate.total_cost))
+            with col2:
+                st.metric("📊 Per Request", ModalCostCalculator.format_cost(cost_estimate.per_request_cost))
+            with col3:
+                st.metric("⏱️ Est. Time", f"{cost_estimate.compute_time_seconds:.0f}s")
         
         # Difficulty selection
         use_database = st.checkbox("Use Structured Prompt Database", value=True,
@@ -1369,190 +1163,73 @@ python3 -m vllm.entrypoints.openai.api_server \\
         else:
             difficulty_range = None
         
-        # Attacker Setup (LLM-based)
+        # Attacker Setup (LLM-based) - Uses same Modal deployment as defender
         st.subheader("Attacker Setup (Optional)")
         use_llm_attacker = st.checkbox(
             "Use LLM-based Attacker",
             value=False,
-            help="Use an LLM model to generate attack prompts instead of rule-based generation"
+            help="Use an LLM model to generate attack prompts. Uses same Modal deployment as defender to save resources."
         )
         
         attacker_model_name = None
-        attacker_instance_id = None
         attacker_api_endpoint = None
         
         if use_llm_attacker:
-            attacker_type = st.selectbox(
-                "Attacker Model Type",
-                ["Lambda Cloud"],
-                key="attacker_type",
-                help="Attacker model type (currently only Lambda Cloud supported)"
-            )
-            
-            if attacker_type == "Lambda Cloud" and deployed_models:
-                # Show model selector for attacker - only deployed models
-                attacker_h100_instances = [inst for inst in deployed_models if "h100" in inst.get("instance_type", "").lower() or "h100" in inst.get("key", "").lower()]
-                attacker_other_instances = [inst for inst in deployed_models if inst not in attacker_h100_instances]
-                
-                attacker_instance_options = {}
-                for inst in attacker_h100_instances:
-                    label = f"🚀 {inst['name']} - H100 ({inst['model_name'].split('/')[-1]}) - THE BIG ONE!"
-                    attacker_instance_options[label] = inst
-                for inst in attacker_other_instances:
-                    label = f"{inst['name']} ({inst['model_name'].split('/')[-1]})"
-                    attacker_instance_options[label] = inst
-                attacker_instance_options["Custom Instance"] = None
-                
-                attacker_selected_label = st.selectbox(
-                    "Select Attacker Instance",
-                    list(attacker_instance_options.keys()),
-                    key="attacker_instance",
-                    help="Select Lambda instance for attacker model"
+            if defender_type == "Modal.com" and 'model_name' in locals() and 'api_endpoint' in locals() and api_endpoint:
+                # Use same Modal deployment - no separate deployment needed
+                st.info("✅ **Using same Modal deployment as defender** - All models run on the same endpoint to save resources and time.")
+                attacker_model_name = model_name  # Same model as defender
+                attacker_api_endpoint = api_endpoint  # Same endpoint as defender
+                st.caption(f"Model: {model_name} | Endpoint: {api_endpoint[:50]}...")
+            else:
+                st.warning("⚠️ Configure defender first (Modal.com) to use LLM attacker")
+                attacker_model_name = st.text_input(
+                    "Attacker Model",
+                    key="attacker_model_name",
+                    help="Model name (e.g., mistralai/Mistral-7B-Instruct-v0.2)"
                 )
-                
-                attacker_selected_instance = attacker_instance_options[attacker_selected_label]
-                
-                if attacker_selected_instance:
-                    attacker_model_name = st.text_input(
-                        "Attacker Model Name",
-                        value=attacker_selected_instance["model_name"],
-                        key="attacker_model_name",
-                        disabled=True
-                    )
-                    attacker_instance_id = st.text_input(
-                        "Attacker Instance ID",
-                        value=attacker_selected_instance["instance_id"],
-                        key="attacker_instance_id",
-                        disabled=True
-                    )
-                    attacker_api_endpoint = st.text_input(
-                        "Attacker API Endpoint",
-                        value=attacker_selected_instance.get("api_endpoint_local") or attacker_selected_instance.get("api_endpoint", ""),
-                        key="attacker_api_endpoint"
-                    )
-                else:
-                    attacker_model_name = st.text_input("Attacker Model Name", key="attacker_model_name_custom")
-                    attacker_instance_id = st.text_input("Attacker Instance ID", key="attacker_instance_id_custom")
-                    attacker_api_endpoint = st.text_input("Attacker API Endpoint", key="attacker_api_endpoint_custom")
+                attacker_api_endpoint = st.text_input(
+                    "Attacker Endpoint",
+                    key="attacker_api_endpoint",
+                    help="Modal.com endpoint URL"
+                )
         
-        # Evaluator Setup (LLM-based)
+        # Evaluator Setup (LLM-based) - Uses same Modal deployment as defender
         st.subheader("Evaluator Setup (Optional)")
         use_llm_evaluator = st.checkbox(
             "Use LLM-based Evaluator",
             value=False,
-            help="Use an LLM model to evaluate responses instead of rule-based classification"
+            help="Use an LLM model to evaluate responses. Uses same Modal deployment as defender to save resources."
         )
         
         evaluator_model_name = None
-        evaluator_instance_id = None
         evaluator_api_endpoint = None
         
         if use_llm_evaluator:
-            evaluator_type = st.selectbox(
-                "Evaluator Model Type",
-                ["Lambda Cloud"],
-                key="evaluator_type",
-                help="Evaluator model type (currently only Lambda Cloud supported)"
-            )
-            
-            if evaluator_type == "Lambda Cloud" and deployed_models:
-                # Show model selector for evaluator - only deployed models
-                evaluator_h100_instances = [inst for inst in deployed_models if "h100" in inst.get("instance_type", "").lower() or "h100" in inst.get("key", "").lower()]
-                evaluator_other_instances = [inst for inst in deployed_models if inst not in evaluator_h100_instances]
-                
-                evaluator_instance_options = {}
-                for inst in evaluator_h100_instances:
-                    label = f"🚀 {inst['name']} - H100 ({inst['model_name'].split('/')[-1]}) - THE BIG ONE!"
-                    evaluator_instance_options[label] = inst
-                for inst in evaluator_other_instances:
-                    label = f"{inst['name']} ({inst['model_name'].split('/')[-1]})"
-                    evaluator_instance_options[label] = inst
-                evaluator_instance_options["Custom Instance"] = None
-                
-                evaluator_selected_label = st.selectbox(
-                    "Select Evaluator Instance",
-                    list(evaluator_instance_options.keys()),
-                    key="evaluator_instance",
-                    help="Select Lambda instance for evaluator model"
-                )
-                
-                evaluator_selected_instance = evaluator_instance_options[evaluator_selected_label]
-                
-                if evaluator_selected_instance:
-                    evaluator_model_name = st.text_input(
-                        "Evaluator Model Name",
-                        value=evaluator_selected_instance["model_name"],
-                        key="evaluator_model_name",
-                        disabled=True
-                    )
-                    evaluator_instance_id = st.text_input(
-                        "Evaluator Instance ID",
-                        value=evaluator_selected_instance["instance_id"],
-                        key="evaluator_instance_id",
-                        disabled=True
-                    )
-                    evaluator_api_endpoint = st.text_input(
-                        "Evaluator API Endpoint",
-                        value=evaluator_selected_instance.get("api_endpoint_local") or evaluator_selected_instance.get("api_endpoint", ""),
-                        key="evaluator_api_endpoint"
-                    )
-                else:
-                    evaluator_model_name = st.text_input("Evaluator Model Name", key="evaluator_model_name_custom")
-                    evaluator_instance_id = st.text_input("Evaluator Instance ID", key="evaluator_instance_id_custom")
-                    evaluator_api_endpoint = st.text_input("Evaluator API Endpoint", key="evaluator_api_endpoint_custom")
-        
-        # Lambda Scraper config - shows ALL active instances (not just models)
-        st.subheader("Intelligence Gathering")
-        use_scraper = st.checkbox("Gather Recent Attack Patterns", value=True, 
-                                   help="Scrape web sources (GitHub, forums) to identify emerging jailbreak techniques")
-        if use_scraper:
-            # Show instance selector for scraper (all active instances, including H100 without models)
-            if active_instances:
-                # Prioritize H100 instances for scraping (even if no model)
-                scraper_h100_instances = [inst for inst in active_instances if "h100" in inst.get("instance_type", "").lower() or "h100" in inst.get("key", "").lower()]
-                scraper_other_instances = [inst for inst in active_instances if inst not in scraper_h100_instances]
-                
-                scraper_instance_options = {}
-                for inst in scraper_h100_instances:
-                    # For scraper, show instance info (not model info)
-                    label = f"🚀 {inst['name']} - H100 Instance - THE BIG ONE! 🚀"
-                    scraper_instance_options[label] = inst
-                for inst in scraper_other_instances:
-                    label = f"{inst['name']} Instance"
-                    scraper_instance_options[label] = inst
-                scraper_instance_options["Custom Instance"] = None
-                scraper_instance_options["None (Local Scraping)"] = {"instance_id": None}
-                
-                scraper_selected_label = st.selectbox(
-                    "Select Scraper Instance (Optional)",
-                    list(scraper_instance_options.keys()),
-                    key="scraper_instance",
-                    help="Select Lambda instance for web scraping (H100 recommended for better performance). This is for scraping, not a model!"
-                )
-                
-                scraper_selected_instance = scraper_instance_options[scraper_selected_label]
-                
-                if scraper_selected_instance and scraper_selected_instance.get("instance_id"):
-                    scraper_instance_id = scraper_selected_instance["instance_id"]
-                    st.info(f"📡 Using instance {scraper_selected_instance.get('instance_id', '')} for web scraping (not a model)")
-                elif scraper_selected_instance and scraper_selected_instance.get("instance_id") is None:
-                    scraper_instance_id = None
-                    st.info("📡 Using local scraping (no Lambda instance)")
-                else:
-                    scraper_instance_id = st.text_input(
-                        "Lambda Instance ID (Custom)",
-                        key="scraper_instance_custom",
-                        help="Enter instance ID for scraping (this is an instance, not a model!)"
-                    )
+            if defender_type == "Modal.com" and 'model_name' in locals() and 'api_endpoint' in locals() and api_endpoint:
+                # Use same Modal deployment - no separate deployment needed
+                st.info("✅ **Using same Modal deployment as defender** - All models run on the same endpoint to save resources and time.")
+                evaluator_model_name = model_name  # Same model as defender
+                evaluator_api_endpoint = api_endpoint  # Same endpoint as defender
+                st.caption(f"Model: {model_name} | Endpoint: {api_endpoint[:50]}...")
             else:
-                scraper_instance_id = st.text_input(
-                    "Lambda Instance ID (Optional)", 
-                    value="",
-                    key="scraper_instance_manual",
-                    help="Optional: Use a Lambda instance for web scraping (especially H100!). This is for scraping, not a model!"
+                st.warning("⚠️ Configure defender first (Modal.com) to use LLM evaluator")
+                evaluator_model_name = st.text_input(
+                    "Evaluator Model",
+                    key="evaluator_model_name",
+                    help="Model name (e.g., mistralai/Mistral-7B-Instruct-v0.2)"
                 )
-        else:
-            scraper_instance_id = None
+                evaluator_api_endpoint = st.text_input(
+                    "Evaluator Endpoint",
+                    key="evaluator_api_endpoint",
+                    help="Modal.com endpoint URL"
+                )
+        
+        # Old Lambda Cloud code removed
+        
+        # Intelligence gathering removed - Lambda scraper no longer used
+        use_scraper = False
+        scraper_instance_id = None
         
         # Start battle button
         start_battle = st.button("START EVALUATION", type="primary", use_container_width=True)
@@ -1577,36 +1254,32 @@ python3 -m vllm.entrypoints.openai.api_server \\
     if start_battle or st.session_state.battle_running:
         # Initialize arena with threat intelligence enabled
         if not st.session_state.arena:
-            # Initialize LLM attacker if configured
+            # Initialize LLM attacker if configured (Modal.com only)
             llm_attacker = None
-            if use_llm_attacker and attacker_model_name and attacker_instance_id:
+            if use_llm_attacker and attacker_model_name and attacker_api_endpoint:
                 try:
                     from src.attackers.llm_attacker import LLMAttacker
                     llm_attacker = LLMAttacker(
                         model_name=attacker_model_name,
-                        model_type="local",
-                        use_lambda=True,
-                        lambda_instance_id=attacker_instance_id,
-                        lambda_api_endpoint=attacker_api_endpoint
+                        model_type="modal",
+                        api_endpoint=attacker_api_endpoint
                     )
-                    log.info(f"Initialized LLM attacker: {attacker_model_name} on instance {attacker_instance_id}")
+                    log.info(f"Initialized LLM attacker: {attacker_model_name} via Modal")
                 except Exception as e:
                     log.error(f"Error initializing LLM attacker: {e}")
                     st.warning(f"Failed to initialize LLM attacker: {e}")
             
-            # Initialize LLM evaluator if configured
+            # Initialize LLM evaluator if configured (Modal.com only)
             llm_evaluator = None
-            if use_llm_evaluator and evaluator_model_name and evaluator_instance_id:
+            if use_llm_evaluator and evaluator_model_name and evaluator_api_endpoint:
                 try:
                     from src.referee.llm_evaluator import LLMEvaluator
                     llm_evaluator = LLMEvaluator(
                         model_name=evaluator_model_name,
-                        model_type="local",
-                        use_lambda=True,
-                        lambda_instance_id=evaluator_instance_id,
-                        lambda_api_endpoint=evaluator_api_endpoint
+                        model_type="modal",
+                        api_endpoint=evaluator_api_endpoint
                     )
-                    log.info(f"Initialized LLM evaluator: {evaluator_model_name} on instance {evaluator_instance_id}")
+                    log.info(f"Initialized LLM evaluator: {evaluator_model_name} via Modal")
                 except Exception as e:
                     log.error(f"Error initializing LLM evaluator: {e}")
                     st.warning(f"Failed to initialize LLM evaluator: {e}")
@@ -1618,8 +1291,8 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 llm_evaluator=llm_evaluator
             )
         
-        # Gather recent data from Lambda scraper if enabled and integrate with Threat Intelligence
-        if use_scraper:
+        # Intelligence gathering removed - Lambda scraper no longer used
+        if False:  # use_scraper disabled
             import threading
             
             # Show initial status in main thread
@@ -1810,71 +1483,11 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                 return "I can't help with that. I'm designed to be helpful, harmless, and honest."
                     
                     defender = SimpleMockDefender(model_name="demo-model-v1", model_type="mock")
-                elif defender_type == "OpenAI" and api_key:
+                elif False:  # OpenAI removed
                     defender = LLMDefender(model_name=model_name, model_type="openai", api_key=api_key)
-                elif defender_type == "Anthropic" and api_key:
+                elif False:  # Anthropic removed
                     defender = LLMDefender(model_name=model_name, model_type="anthropic", api_key=api_key)
-                elif defender_type == "Lambda Cloud" and instance_id:
-                    # Get instance IP if endpoint not provided
-                    if not api_endpoint:
-                        try:
-                            from src.integrations.lambda_cloud import LambdaCloudClient
-                            lambda_client = LambdaCloudClient()
-                            instance = run_async(lambda_client.get_instance_status(instance_id))
-                            if instance and instance.get("ip"):
-                                ip = instance.get("ip")
-                                # Try default vLLM endpoint
-                                api_endpoint = f"http://{ip}:8000/v1/chat/completions"
-                                st.info(f"Auto-detected endpoint: {api_endpoint}")
-                                st.markdown('<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> Make sure vLLM is running on the instance. If not, set up the API server first.</div>', unsafe_allow_html=True)
-                        except Exception as e:
-                            st.warning(f"Could not auto-detect endpoint: {e}")
-                            st.markdown('<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem; color: #06b6d4;"></i> You can manually set the API endpoint if vLLM is running on a different port</div>', unsafe_allow_html=True)
-                    
-                    defender = LLMDefender(
-                        model_name=model_name,
-                        model_type="local",
-                        use_lambda=True,
-                        lambda_instance_id=instance_id,
-                        lambda_api_endpoint=api_endpoint if api_endpoint else None
-                    )
-                    
-                    # Save API endpoint to deployments file for future use
-                    if api_endpoint and instance_id:
-                        try:
-                            if deployment_config_path.exists():
-                                with open(deployment_config_path, 'r') as f:
-                                    config = json.load(f)
-                                if "deployed_models" not in config:
-                                    config["deployed_models"] = {}
-                                
-                                # Find or create entry for this instance
-                                instance_key = None
-                                for key, value in config["deployed_models"].items():
-                                    if value.get("instance_id") == instance_id:
-                                        instance_key = key
-                                        break
-                                
-                                if not instance_key:
-                                    instance_key = f"{model_name.replace('/', '-')}_{instance_id[:8]}"
-                                    config["deployed_models"][instance_key] = {
-                                        "instance_id": instance_id,
-                                        "model_name": model_name
-                                    }
-                                
-                                config["deployed_models"][instance_key]["api_endpoint"] = api_endpoint
-                                if instance_ip:
-                                    config["deployed_models"][instance_key]["instance_ip"] = instance_ip
-                                
-                                with open(deployment_config_path, 'w') as f:
-                                    json.dump(config, f, indent=2)
-                                log.info(f"Saved API endpoint to deployments file")
-                        except Exception as e:
-                            log.warning(f"Could not save API endpoint: {e}")
-                    
-                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Defender configured: {model_name} on instance {instance_id}</div>', unsafe_allow_html=True)
-                    if api_endpoint:
-                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> API Endpoint: {api_endpoint}</div>', unsafe_allow_html=True)
+                # Lambda Cloud removed - use Modal.com instead
                 elif defender_type == "Modal.com":
                     # Use Modal.com for defender
                     # Get endpoint from input or fallback to settings
@@ -1990,94 +1603,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                         """)
                         st.info(f"💡 **Current endpoint value:** `{api_endpoint or 'Not set'}`")
                         st.stop()
-                elif defender_type == "Lambda Cloud" and api_endpoint:
-                    # Test connectivity for Lambda
-                    col_test1, col_test2 = st.columns(2)
-                    with col_test1:
-                        test_connectivity = st.button("Test API Endpoint", key="test_api_lambda", use_container_width=True)
-                    with col_test2:
-                        show_ssh_tunnel = st.button("SSH Tunnel Setup", key="ssh_tunnel_lambda", use_container_width=True)
-                    
-                    if test_connectivity:
-                        # Test connectivity
-                        try:
-                            from scripts.ssh_tunnel_helper import test_api_endpoint, check_port_connectivity
-                            from urllib.parse import urlparse
-                            
-                            # Check port first
-                            parsed = urlparse(api_endpoint)
-                            host = parsed.hostname or instance_ip
-                            port = parsed.port or 8000
-                            
-                            with st.spinner("Testing connectivity..."):
-                                port_open = check_port_connectivity(host, port, timeout=5.0)
-                                
-                                if port_open:
-                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Port {port} is accessible!</div>', unsafe_allow_html=True)
-                                    
-                                    # Test API
-                                    success, message = test_api_endpoint(api_endpoint, timeout=10.0)
-                                    if success:
-                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
-                                    else:
-                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> {message}</div>', unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Port {port} is NOT accessible - blocked by firewall</div>', unsafe_allow_html=True)
-                                    st.warning("""
-                                    **Port is blocked by Lambda Cloud security group**
-                                    
-                                    **Quick Fix - Use SSH Tunnel:**
-                                    1. Run this command in a terminal:
-                                           ```
-                                           python scripts/ssh_tunnel_helper.py --ip {} --key moses.pem
-                                           ```
-                                        2. Update endpoint to: `http://localhost:8000/v1/chat/completions`
-                                        3. Keep the tunnel running while evaluating
-                                        """.format(instance_ip))
-                        except Exception as e:
-                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Error testing connectivity: {str(e)[:200]}</div>', unsafe_allow_html=True)
-                        
-                        if show_ssh_tunnel:
-                            st.info("""
-                            **SSH Tunnel Setup Instructions:**
-                            
-                            1. **Open a new terminal/command prompt**
-                            
-                            2. **Start SSH tunnel:**
-                               ```bash
-                               python scripts/ssh_tunnel_helper.py --ip {} --key moses.pem
-                               ```
-                            
-                            3. **Keep the terminal open** (tunnel runs in foreground)
-                            
-                            4. **Update API Endpoint to:**
-                               ```
-                               http://localhost:8000/v1/chat/completions
-                               ```
-                            
-                            5. **Click "START EVALUATION"** - the tunnel will forward requests to the instance
-                            
-                            6. **To stop tunnel:** Press Ctrl+C in the terminal
-                            
-                            **Or use security group configuration:**
-                            - Run: `python scripts/configure_security_group.py`
-                            - Follow the instructions to open port 8000
-                            """.format(instance_ip))
-                            
-                            # Provide copy-paste command
-                            st.code(f"python scripts/ssh_tunnel_helper.py --ip {instance_ip} --key moses.pem", language="bash")
-                            
-                            # Test connectivity with current endpoint
-                            st.markdown("---")
-                            st.markdown("**Or test connectivity first:**")
-                            if st.button("Test Current Endpoint", key="test_current"):
-                                from scripts.ssh_tunnel_helper import test_api_endpoint
-                                success, message = test_api_endpoint(api_endpoint, timeout=5.0)
-                                if success:
-                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
-                                else:
-                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> {message}</div>', unsafe_allow_html=True)
-                                    st.markdown('<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem; color: #06b6d4;"></i> Consider using SSH tunnel as workaround</div>', unsafe_allow_html=True)
+                # Lambda Cloud removed - connectivity test code removed
                 else:
                     st.error("Please configure defender properly")
                     st.stop()
@@ -3370,17 +2896,17 @@ python3 -m vllm.entrypoints.openai.api_server \\
         with col1:
             st.markdown("""
             <div class="stat-box">
-                <h3>Defender</h3>
-                <p>Test any LLM model</p>
-                <p>OpenAI, Anthropic, or Lambda Cloud</p>
+                <h3>🚀 Modal.com Defender</h3>
+                <p>Test any open-source LLM</p>
+                <p>Pay-per-second, auto-scaling</p>
             </div>
             """, unsafe_allow_html=True)
         
         with col2:
             st.markdown("""
             <div class="stat-box">
-                <h3>Attackers</h3>
-                <p>Multiple strategies</p>
+                <h3>⚔️ Multiple Attackers</h3>
+                <p>10+ attack strategies</p>
                 <p>Real-time visualization</p>
             </div>
             """, unsafe_allow_html=True)
@@ -3388,9 +2914,9 @@ python3 -m vllm.entrypoints.openai.api_server \\
         with col3:
             st.markdown("""
             <div class="stat-box">
-                <h3>Lambda Scraper</h3>
-                <p>Recent attack data</p>
-                <p>Web scraping & analysis</p>
+                <h3>💰 Cost Efficient</h3>
+                <p>60-80% cost savings</p>
+                <p>No idle costs</p>
             </div>
             """, unsafe_allow_html=True)
 

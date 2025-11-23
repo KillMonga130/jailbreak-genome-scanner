@@ -2,101 +2,60 @@
 
 import asyncio
 from typing import Optional, Dict, Any, List
-import httpx
-
-# Optional imports for different providers
-try:
-    import openai
-    HAS_OPENAI = True
-except ImportError:
-    HAS_OPENAI = False
-
-try:
-    from anthropic import Anthropic
-    HAS_ANTHROPIC = True
-except ImportError:
-    HAS_ANTHROPIC = False
 from src.models.jailbreak import DefenderProfile
 from src.utils.logger import log
 from src.config import settings
-from src.integrations.lambda_cloud import LambdaDefender, LambdaModelRunner
 
 
 class LLMDefender:
-    """Wrapper for evaluating LLM models as defenders in the arena."""
+    """Simplified defender using Modal.com only (with Mock fallback for testing)."""
     
     def __init__(
         self,
         model_name: str,
-        model_type: str = "openai",
-        api_key: Optional[str] = None,
-        model_path: Optional[str] = None,
-        use_lambda: bool = False,
-        lambda_instance_id: Optional[str] = None,
+        model_type: str = "modal",
+        api_endpoint: Optional[str] = None,
+        mock_mode: bool = False,
         **kwargs
     ):
         """
         Initialize a defender model.
         
         Args:
-            model_name: Name of the model (e.g., "gpt-4", "claude-3-opus")
-            model_type: Type of model provider ("openai", "anthropic", "local", etc.)
-            api_key: API key for the model provider
-            model_path: Path to local model (if model_type="local")
+            model_name: Name of the model (e.g., "microsoft/phi-2", "mistralai/Mistral-7B-Instruct-v0.2")
+            model_type: Type of model provider ("modal" or "mock")
+            api_endpoint: Modal.com API endpoint URL (auto-detected if not provided)
+            mock_mode: If True, use mock defender for testing (overrides model_type)
             **kwargs: Additional model-specific parameters
         """
         self.model_name = model_name
-        self.model_type = model_type
-        self.api_key = api_key
-        self.model_path = model_path
-        self.use_lambda = use_lambda
-        self.lambda_instance_id = lambda_instance_id
+        self.model_type = "mock" if mock_mode else model_type
+        self.api_endpoint = api_endpoint or settings.modal_endpoint
         self.kwargs = kwargs
         
-        # Initialize Lambda defender if requested
-        self.lambda_defender = None
-        self.lambda_api_endpoint = kwargs.get("lambda_api_endpoint")  # Store API endpoint if provided
-        if use_lambda:
-            if lambda_instance_id:
-                runner = LambdaModelRunner()
-                self.lambda_defender = LambdaDefender(
-                    instance_id=lambda_instance_id,
-                    model_name=model_name,
-                    lambda_runner=runner,
-                    api_endpoint=self.lambda_api_endpoint  # Pass API endpoint during init
-                )
-                log.info(f"Using Lambda Cloud instance {lambda_instance_id} for defender")
-                if self.lambda_api_endpoint:
-                    log.info(f"Using API endpoint: {self.lambda_api_endpoint}")
-            else:
-                log.warning("use_lambda=True but no lambda_instance_id provided")
-        
-        # Initialize client based on model type (fallback if not using Lambda)
-        self.client = None
-        if not use_lambda:
-            if model_type == "openai":
-                if not HAS_OPENAI:
-                    log.warning("OpenAI not installed. Install with: pip install openai")
-                    raise ImportError("OpenAI library not installed")
-                self.client = openai.OpenAI(api_key=api_key or settings.openai_api_key)
-            elif model_type == "anthropic":
-                if not HAS_ANTHROPIC:
-                    log.warning("Anthropic not installed. Install with: pip install anthropic")
-                    raise ImportError("Anthropic library not installed")
-                self.client = Anthropic(api_key=api_key or settings.anthropic_api_key)
-            elif model_type == "local" or model_type == "mock":
-                # Initialize local model (would use transformers in practice)
-                # Mock models are supported without dependencies
-                pass
-            else:
-                raise ValueError(f"Unsupported model type: {model_type}")
+        # Initialize defender based on type
+        self.defender = None
+        if self.model_type == "mock" or mock_mode:
+            # Mock defender for testing/demo
+            self.defender = None  # Will use _generate_mock directly
+            log.info(f"Initialized Mock defender: {model_name}")
+        else:
+            # Use Modal.com defender
+            from src.integrations.modal_client import ModalDefender
+            self.defender = ModalDefender(
+                app_name="jailbreak-genome-scanner",
+                model_name=model_name,
+                api_endpoint=self.api_endpoint,
+                **kwargs
+            )
+            log.info(f"Initialized Modal defender: {model_name} (endpoint: {self.api_endpoint})")
         
         # Create defender profile
         self.profile = DefenderProfile(
-            id=f"defender_{model_name}_{model_type}",
+            id=f"defender_{model_name}_{self.model_type}",
             model_name=model_name,
-            model_type=model_type,
-            model_path=model_path,
+            model_type=self.model_type,
+            model_path=None,
             metadata=kwargs
         )
         
@@ -137,8 +96,6 @@ class LLMDefender:
                 log.info("Adaptive system prompt enabled")
             except ImportError:
                 log.warning("Adaptive system prompt module not available")
-        
-        log.info(f"Initialized defender: {model_name} ({model_type})")
     
     async def generate_response(self, prompt: str, **kwargs) -> str:
         """
@@ -175,26 +132,14 @@ class LLMDefender:
             prompt = filtered_prompt
         
         try:
-            # Use Lambda if configured
-            if self.use_lambda and self.lambda_defender:
-                # Update API endpoint if provided in kwargs (allows runtime override)
-                if "lambda_api_endpoint" in kwargs and kwargs["lambda_api_endpoint"]:
-                    self.lambda_defender.api_endpoint = kwargs["lambda_api_endpoint"]
-                    log.debug(f"Updated Lambda API endpoint: {kwargs['lambda_api_endpoint']}")
-                
-                # Generate response using Lambda defender
-                response = await self.lambda_defender.generate_response(prompt, **kwargs)
-                log.debug(f"Lambda response received: {response[:100]}...")
-            elif self.model_type == "openai":
-                response = await self._generate_openai(prompt, **kwargs)
-            elif self.model_type == "anthropic":
-                response = await self._generate_anthropic(prompt, **kwargs)
-            elif self.model_type == "local":
-                response = await self._generate_local(prompt, **kwargs)
-            elif self.model_type == "mock":
+            # Generate response based on defender type
+            if self.model_type == "mock":
                 response = await self._generate_mock(prompt, **kwargs)
+            elif self.defender:
+                # Use Modal defender
+                response = await self.defender.generate_response(prompt, **kwargs)
             else:
-                raise ValueError(f"Unsupported model type: {self.model_type}")
+                raise ValueError(f"Defender not properly initialized for type: {self.model_type}")
             
             # Post-processing: Response Guard (if enabled)
             if hasattr(self, 'response_guard') and self.response_guard:
@@ -216,7 +161,7 @@ class LLMDefender:
             if response and response.startswith("Error:"):
                 log.error(f"API call failed: {response[:200]}...")
                 # Raise exception instead of returning error string
-                raise RuntimeError(f"Lambda API call failed: {response}")
+                raise RuntimeError(f"Modal API call failed: {response}")
             
             # Update profile stats only on successful response
             self.profile.total_evaluations += 1
@@ -228,31 +173,6 @@ class LLMDefender:
             # Still increment evaluation count for error tracking
             self.profile.total_evaluations += 1
             return error_msg
-    
-    async def _generate_openai(self, prompt: str, **kwargs) -> str:
-        """Generate response using OpenAI API."""
-        if not self.client:
-            raise RuntimeError("OpenAI client not initialized")
-        response = await asyncio.to_thread(
-            self.client.chat.completions.create,
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=kwargs.get("temperature", 0.7),
-            max_tokens=kwargs.get("max_tokens", 1000)
-        )
-        return response.choices[0].message.content
-    
-    async def _generate_anthropic(self, prompt: str, **kwargs) -> str:
-        """Generate response using Anthropic API."""
-        if not self.client:
-            raise RuntimeError("Anthropic client not initialized")
-        response = await asyncio.to_thread(
-            self.client.messages.create,
-            model=self.model_name,
-            max_tokens=kwargs.get("max_tokens", 1000),
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return response.content[0].text
     
     async def _generate_mock(self, prompt: str, **kwargs) -> str:
         """Generate mock response for testing."""
@@ -270,12 +190,6 @@ class LLMDefender:
         else:
             # Mock safe response
             return "I can't help with that request. It may be harmful or inappropriate."
-    
-    async def _generate_local(self, prompt: str, **kwargs) -> str:
-        """Generate response using local model."""
-        # Placeholder - would use transformers in practice
-        log.warning("Local model generation not fully implemented")
-        return "Local model response placeholder"
     
     def get_profile(self) -> DefenderProfile:
         """Get defender profile."""
