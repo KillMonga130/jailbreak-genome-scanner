@@ -2387,6 +2387,166 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                 st.code(traceback.format_exc())
                 else:
                     st.info("No evaluation history available for 3D visualization. Run an evaluation first.")
+            
+            with tab6:
+                # Defense Improvement Dashboard
+                st.markdown("### 🛡️ Continuous Defense Improvement")
+                st.markdown("*Real-time defense metrics, pattern analysis, and improvement recommendations*")
+                
+                if st.session_state.arena and st.session_state.arena.pattern_database:
+                    db = st.session_state.arena.pattern_database
+                    
+                    # Pattern Database Statistics
+                    st.markdown("#### 📊 Pattern Database Statistics")
+                    analysis = db.analyze_patterns()
+                    
+                    col_db1, col_db2, col_db3, col_db4 = st.columns(4)
+                    with col_db1:
+                        st.metric("Total Patterns", analysis.get('total_patterns', 0))
+                    with col_db2:
+                        st.metric("High Severity", analysis.get('high_severity_count', 0))
+                    with col_db3:
+                        st.metric("Critical Patterns", analysis.get('critical_patterns', 0))
+                    with col_db4:
+                        st.metric("Avg Attack Cost", f"{analysis.get('average_attack_cost', 0):.2f}")
+                    
+                    # Strategy Distribution
+                    if analysis.get('strategies'):
+                        st.markdown("#### 🎯 Strategy Distribution")
+                        strategy_data = analysis['strategies']
+                        strategy_df = pd.DataFrame(list(strategy_data.items()), columns=['Strategy', 'Count'])
+                        strategy_fig = px.bar(
+                            strategy_df,
+                            x='Strategy',
+                            y='Count',
+                            title='Exploit Patterns by Strategy',
+                            color='Count',
+                            color_continuous_scale='Reds'
+                        )
+                        strategy_fig.update_layout(
+                            paper_bgcolor='#1a1a1a',
+                            plot_bgcolor='#1a1a1a',
+                            font={'color': '#e0e7ff'},
+                            title_font={'color': '#ffffff'}
+                        )
+                        st.plotly_chart(strategy_fig, use_container_width=True)
+                    
+                    # Vulnerability Analysis
+                    st.markdown("#### 🔍 Vulnerability Analysis")
+                    try:
+                        from src.defense.vulnerability_analyzer import VulnerabilityAnalyzer
+                        from src.defense.patch_generator import DefensePatchGenerator
+                        
+                        analyzer = VulnerabilityAnalyzer(pattern_database=db)
+                        vulnerabilities = analyzer.analyze_vulnerabilities()
+                        
+                        if vulnerabilities:
+                            vuln_summary = analyzer.get_vulnerability_summary()
+                            
+                            st.markdown(f"**Total Vulnerabilities Detected:** {vuln_summary.get('total_vulnerabilities', 0)}")
+                            
+                            # Top vulnerabilities
+                            st.markdown("##### 🚨 Top Priority Vulnerabilities")
+                            for i, vuln in enumerate(vulnerabilities[:5], 1):
+                                severity_color = {
+                                    SeverityLevel.CRITICAL: "#dc3545",
+                                    SeverityLevel.HIGH: "#f59e0b",
+                                    SeverityLevel.MODERATE: "#fbbf24"
+                                }.get(vuln.severity, "#6b7280")
+                                
+                                st.markdown(f"""
+                                <div style="padding: 1rem; background: rgba(15, 23, 42, 0.7); border-left: 4px solid {severity_color}; border-radius: 8px; margin: 0.5rem 0;">
+                                    <strong>#{i} - {vuln.description}</strong><br>
+                                    <small>Priority: {vuln.priority} | Severity: {vuln.severity.value}/5 | Patterns: {vuln.pattern_count}</small><br>
+                                    <small><strong>Recommendations:</strong></small><br>
+                                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                        {''.join([f'<li>{rec}</li>' for rec in vuln.recommendations[:3]])}
+                                    </ul>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            
+                            # Generate patches
+                            if st.button("🔧 Generate Defense Patches", type="primary"):
+                                patch_generator = DefensePatchGenerator(
+                                    vulnerability_analyzer=analyzer
+                                )
+                                patches = patch_generator.generate_patches(vulnerabilities)
+                                
+                                st.success(f"Generated {len(patches)} defense patches!")
+                                
+                                # Show patches
+                                for patch in patches[:3]:
+                                    st.markdown(f"""
+                                    <div style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border-left: 4px solid #22c55e; border-radius: 8px; margin: 0.5rem 0;">
+                                        <strong>Patch: {patch.description}</strong><br>
+                                        <small>Type: {patch.patch_type} | Priority: {patch.priority}</small>
+                                    </div>
+                                    """, unsafe_allow_html=True)
+                        else:
+                            st.info("No vulnerabilities detected. Defense appears strong!")
+                    except ImportError:
+                        st.warning("Vulnerability analyzer not available")
+                    
+                    # Threat Landscape
+                    st.markdown("#### 🌐 Threat Landscape")
+                    try:
+                        from src.defense.pattern_recognizer import ThreatPatternRecognizer
+                        
+                        recognizer = ThreatPatternRecognizer(pattern_database=db)
+                        landscape = recognizer.get_overall_threat_landscape()
+                        
+                        threat_level = landscape.get('threat_level', 'unknown')
+                        threat_color = {
+                            'critical': '#dc3545',
+                            'high': '#f59e0b',
+                            'moderate': '#fbbf24',
+                            'low': '#22c55e'
+                        }.get(threat_level, '#6b7280')
+                        
+                        st.markdown(f"""
+                        <div style="padding: 1rem; background: rgba(15, 23, 42, 0.7); border-left: 4px solid {threat_color}; border-radius: 8px;">
+                            <strong>Overall Threat Level: {threat_level.upper()}</strong><br>
+                            <small>Total Patterns: {landscape.get('total_exploit_patterns', 0)}</small><br>
+                            <small>Critical Vulnerabilities: {landscape.get('critical_vulnerabilities', 0)}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        # Recommendations
+                        if landscape.get('recommendations'):
+                            st.markdown("##### 💡 Recommendations")
+                            for rec in landscape['recommendations'][:5]:
+                                st.markdown(f"- {rec}")
+                    except ImportError:
+                        st.warning("Threat pattern recognizer not available")
+                    
+                    # Defense Rules
+                    st.markdown("#### ⚙️ Active Defense Rules")
+                    try:
+                        from src.defense.adaptive_engine import AdaptiveDefenseEngine
+                        
+                        engine = AdaptiveDefenseEngine(pattern_database=db)
+                        rules = engine.get_active_rules()
+                        
+                        if rules:
+                            rule_stats = engine.get_rule_statistics()
+                            st.metric("Total Rules", rule_stats.get('total_rules', 0))
+                            st.metric("High Priority", rule_stats.get('high_priority_rules', 0))
+                            
+                            # Show top rules
+                            for rule in rules[:5]:
+                                st.markdown(f"""
+                                <div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid #06b6d4; border-radius: 6px; margin: 0.5rem 0;">
+                                    <strong>{rule.description}</strong><br>
+                                    <small>Type: {rule.rule_type} | Priority: {rule.priority}</small>
+                                </div>
+                                """, unsafe_allow_html=True)
+                        else:
+                            st.info("No defense rules generated yet. Run more evaluations to generate rules.")
+                    except ImportError:
+                        st.warning("Adaptive defense engine not available")
+                    
+                else:
+                    st.info("Pattern database not enabled. Enable it in arena initialization to see defense metrics.")
         
         # Battle logs with sample responses (collapsible)
         with logs_container:
