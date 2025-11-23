@@ -40,12 +40,12 @@ st.set_page_config(
     }
 )
 
-# Premium Glassmorphic Design - World-Class Professional Theme
+# Professional Defense Dashboard - Defensive Acceleration Hackathon
 st.markdown("""
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-    /* Import premium fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    /* Professional fonts for enterprise UI */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
     
     /* Icon styling */
     .icon {
@@ -83,40 +83,10 @@ st.markdown("""
         --glass-shadow: rgba(0, 0, 0, 0.3);
     }
     
-    /* Animated gradient background - Deep Blue/Teal Professional */
+    /* Clean professional background */
     .stApp {
-        background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 25%, #1e293b 50%, #0f172a 75%, #0a0e1a 100%);
-        background-size: 400% 400%;
-        animation: gradientShift 15s ease infinite;
-        position: relative;
-        min-height: 100vh;
-    }
-    
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: 
-            radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
-            radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
-        pointer-events: none;
-        z-index: 0;
-        animation: float 20s ease-in-out infinite;
-    }
-    
-    @keyframes gradientShift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-    
-    @keyframes float {
-        0%, 100% { transform: translate(0, 0) scale(1); }
-        33% { transform: translate(30px, -30px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
+        background: #0f172a;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
     /* Main content area - Glassmorphic */
@@ -140,7 +110,7 @@ st.markdown("""
         padding: 2rem 0;
         position: relative;
         animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        text-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
+        
     }
     
     .main-header::after {
@@ -265,14 +235,10 @@ st.markdown("""
             rgba(14, 165, 233, 0.8),
             rgba(6, 182, 212, 0.8),
             transparent);
-        animation: pulseGlow 2s ease-in-out infinite;
+        
     }
     
-    @keyframes pulseGlow {
-        0%, 100% {
-            opacity: 0.5;
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-        }
+    
         50% {
             opacity: 1;
             box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
@@ -381,51 +347,20 @@ st.markdown("""
         background: rgba(15, 23, 42, 0.9);
     }
     
-    /* Premium Buttons with Glass Effect - Professional Cyan/Blue */
+    /* Professional buttons */
     .stButton > button {
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2)) !important;
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        border: 1px solid rgba(255, 255, 255, 0.2) !important;
-        border-radius: 12px !important;
+        background: #3b82f6 !important;
+        border: none !important;
+        border-radius: 8px !important;
         color: #ffffff !important;
         font-weight: 600 !important;
         font-family: 'Inter', sans-serif !important;
-        padding: 0.75rem 1.5rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 
-            0 4px 16px rgba(6, 182, 212, 0.2),
-            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .stButton > button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-        transition: left 0.5s;
-    }
-    
-    .stButton > button:hover::before {
-        left: 100%;
+        padding: 0.625rem 1.25rem !important;
+        transition: background-color 0.2s ease !important;
     }
     
     .stButton > button:hover {
-        transform: translateY(-2px) scale(1.02) !important;
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(14, 165, 233, 0.3)) !important;
-        box-shadow: 
-            0 8px 24px rgba(6, 182, 212, 0.4),
-            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
-        border-color: rgba(255, 255, 255, 0.3) !important;
-    }
-    
-    .stButton > button:active {
-        transform: translateY(0) scale(0.98) !important;
+        background: #60a5fa !important;
     }
     
     /* Premium Progress Bar - Cyan/Blue */
@@ -433,11 +368,10 @@ st.markdown("""
         background: linear-gradient(90deg, #06b6d4, #0ea5e9, #3b82f6) !important;
         border-radius: 10px !important;
         box-shadow: 0 0 20px rgba(6, 182, 212, 0.5) !important;
-        animation: shimmer 2s infinite !important;
+        
     }
     
-    @keyframes shimmer {
-        0% { background-position: -100% 0; }
+    
         100% { background-position: 200% 0; }
     }
     
@@ -526,14 +460,11 @@ st.markdown("""
         background: linear-gradient(180deg, rgba(6, 182, 212, 0.8), rgba(14, 165, 233, 0.8));
     }
     
-    /* Premium metric numbers - Cyan/White */
+    /* Professional metric values */
     [data-testid="stMetricValue"] {
         font-family: 'Inter', sans-serif !important;
         font-weight: 700 !important;
-        background: linear-gradient(135deg, #ffffff, #06b6d4);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
+        color: #f1f5f9 !important;
     }
     
     /* Smooth transitions for all elements */
