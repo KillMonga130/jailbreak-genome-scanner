@@ -1016,9 +1016,52 @@ def main():
         st.subheader("Defender Setup")
         defender_type = st.selectbox(
             "Defender Type",
-            ["Mock (Demo)", "OpenAI", "Anthropic", "Lambda Cloud"],
-            help="Choose your defender model type"
+            ["Mock (Demo)", "OpenAI", "Anthropic", "Lambda Cloud", "Modal.com"],
+            help="Choose your defender model type. Modal.com = Pay-per-use serverless (recommended for cost savings)"
         )
+        
+        # Initialize model_name to None (will be set by each defender type)
+        model_name = None
+        api_key = None
+        instance_id = None
+        api_endpoint = None
+        
+        # Show model selector immediately for Modal.com
+        if defender_type == "Modal.com":
+            from src.integrations.modal_models import get_model_list, get_model_id, get_model_info
+            available_models = get_model_list()
+            default_model_idx = 0
+            
+            # Get saved selection from session state if available
+            saved_model_key = "modal_selected_model"
+            if saved_model_key in st.session_state:
+                try:
+                    saved_idx = available_models.index(st.session_state[saved_model_key])
+                    default_model_idx = saved_idx
+                except (ValueError, KeyError):
+                    pass
+            
+            st.markdown("---")
+            st.markdown("#### 🎯 **Model Selection**")
+            modal_selected_model = st.selectbox(
+                "**Choose Model for Defender**",
+                available_models,
+                index=default_model_idx,
+                help="Select which LLM model to use. All models are vLLM-compatible and will be loaded on-demand.",
+                key="modal_model_selector_top"
+            )
+            
+            # Show model info
+            model_info = get_model_info(modal_selected_model)
+            if model_info:
+                st.info(f"📦 **{modal_selected_model}** ({model_info.get('size', 'Unknown')}) - {model_info.get('description', '')}")
+                model_name = get_model_id(modal_selected_model)
+            else:
+                model_name = modal_selected_model
+            
+            # Store in session state
+            st.session_state[saved_model_key] = modal_selected_model
+            st.markdown("---")
         
         if defender_type == "OpenAI":
             st.info("💡 **Note**: For Lambda Cloud credits, use 'Lambda Cloud' option with open-source models instead")
@@ -1161,6 +1204,60 @@ def main():
                     model_name = st.text_input("Model Name", default_model)
                     instance_id = st.text_input("Lambda Instance ID", default_instance)
                     api_endpoint = st.text_input("API Endpoint", default_endpoint)
+            elif defender_type == "Modal.com":
+                st.info("💰 **Pay-per-use**: Only pay when models run (per second). No idle costs!")
+                st.markdown("""
+                <div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;">
+                <strong>Modal.com Benefits:</strong><br>
+                • Pay only when running (per second)<br>
+                • No idle costs (containers auto-shutdown)<br>
+                • Access to multiple models<br>
+                • Serverless & auto-scaling
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Get Modal endpoint from config - reload settings to get latest .env values
+                from src.config import Settings
+                import os
+                # Force reload of .env
+                from dotenv import load_dotenv
+                load_dotenv(project_root / ".env", override=True)
+                # Create fresh settings instance
+                current_settings = Settings()
+                modal_endpoint = current_settings.modal_chat_endpoint or current_settings.modal_endpoint or os.getenv("MODAL_ENDPOINT_CHAT")
+                
+                # Model selector already shown at top - use that selection
+                # Get the selected model from session state (set at top)
+                saved_model_key = "modal_selected_model"
+                if saved_model_key in st.session_state:
+                    from src.integrations.modal_models import get_model_id
+                    model_name = get_model_id(st.session_state[saved_model_key])
+                else:
+                    # Fallback if not set
+                    from src.integrations.modal_models import get_model_list, get_model_id
+                    available_models = get_model_list()
+                    model_name = get_model_id(available_models[0])  # Default to first
+                
+                # Endpoint configuration
+                if modal_endpoint:
+                    st.success(f"✅ Modal endpoint configured: {modal_endpoint[:50]}...")
+                    api_endpoint = st.text_input(
+                        "Modal Endpoint",
+                        value=modal_endpoint,
+                        help="Modal.com endpoint URL (from deployment)"
+                    )
+                else:
+                    st.warning("⚠️ Modal endpoint not configured. Deploy first: `modal deploy modal_deploy.py`")
+                    api_endpoint = st.text_input(
+                        "Modal Endpoint",
+                        value="",
+                        placeholder="https://your-username--jailbreak-genome-scanner-chat-completions.modal.run",
+                        help="Enter Modal endpoint URL from deployment"
+                    )
+                    st.info("💡 Get endpoint from Modal dashboard after deploying")
+                
+                # Don't show text input for Modal - use selected model from dropdown
+                instance_id = None  # Not used for Modal
             else:
                 # No active instances, use manual input
                 model_name = st.text_input("Model Name", default_model)
@@ -1227,8 +1324,14 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 else:
                     st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Endpoint configured: {api_endpoint}</div>', unsafe_allow_html=True)
             api_key = None
-        else:
+        elif defender_type == "Mock (Demo)":
             model_name = "demo-model-v1"
+            api_key = None
+            instance_id = None
+            api_endpoint = None
+        else:
+            # Fallback for unknown defender types
+            model_name = default_model
             api_key = None
             instance_id = None
             api_endpoint = None
@@ -1690,6 +1793,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                     """, unsafe_allow_html=True)
         
         # Create defender
+        defender = None  # Initialize to None
         with st.spinner("Setting up Defender"):
             try:
                 if defender_type == "Mock (Demo)":
@@ -1771,55 +1875,167 @@ python3 -m vllm.entrypoints.openai.api_server \\
                     st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Defender configured: {model_name} on instance {instance_id}</div>', unsafe_allow_html=True)
                     if api_endpoint:
                         st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> API Endpoint: {api_endpoint}</div>', unsafe_allow_html=True)
+                elif defender_type == "Modal.com":
+                    # Use Modal.com for defender
+                    # Get endpoint from input or fallback to settings
+                    if not api_endpoint or api_endpoint == "":
+                        # Reload settings to get latest .env values
+                        from dotenv import load_dotenv
+                        load_dotenv(project_root / ".env", override=True)
+                        from src.config import Settings
+                        import os
+                        current_settings = Settings()
+                        api_endpoint = (api_endpoint or 
+                                      current_settings.modal_chat_endpoint or 
+                                      current_settings.modal_endpoint or 
+                                      os.getenv("MODAL_ENDPOINT_CHAT") or
+                                      os.getenv("MODAL_ENDPOINT_JAILBREAK_GENOME_SCANNER"))
+                    
+                    if api_endpoint and api_endpoint.strip():
+                        # Use Modal.com for defender
+                        from src.integrations.modal_client import ModalDefender
+                        
+                        # Ensure model_name is set (should be from selector above)
+                        # If model_name is not set or is the demo model, get it from session state or default
+                        if not model_name or model_name == "demo-model-v1" or model_name is None:
+                            # Try to get from session state (set by selector)
+                            modal_model_key = f"modal_selected_model_{api_endpoint}"
+                            if modal_model_key in st.session_state:
+                                from src.integrations.modal_models import get_model_id
+                                model_name = get_model_id(st.session_state[modal_model_key])
+                                log.info(f"Restored model from session: {model_name}")
+                            else:
+                                # Fallback: use default Mistral 7B
+                                from src.integrations.modal_models import get_model_list, get_model_id
+                                available_models = get_model_list()
+                                model_name = get_model_id(available_models[0])  # Default to first model (Mistral 7B)
+                                log.warning(f"Model name was reset, using default: {model_name}")
+                        
+                        log.info(f"Creating Modal defender with model: {model_name}")
+                        modal_defender = ModalDefender(
+                            app_name="jailbreak-genome-scanner",
+                            model_name=model_name,
+                            function_name="chat_completions",
+                            api_endpoint=api_endpoint
+                        )
+                        
+                        # Wrap Modal defender in LLMDefender interface
+                        class ModalLLMDefender(LLMDefender):
+                            def __init__(self, modal_defender, model_name):
+                                # Use "local" as model_type since Modal is similar to local API endpoint
+                                super().__init__(model_name=model_name, model_type="local")
+                                self.modal_defender = modal_defender
+                            
+                            async def generate_response(self, prompt, **kwargs):
+                                return await self.modal_defender.generate_response(prompt, **kwargs)
+                        
+                        defender = ModalLLMDefender(modal_defender, model_name)
+                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Modal.com Defender configured: {model_name}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> Modal Endpoint: {api_endpoint}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-dollar-sign" style="margin-right: 0.5rem; color: #22c55e;"></i> Pay-per-use: Only charged when running (per second)</div>', unsafe_allow_html=True)
                         
                         # Test API endpoint connectivity
                         # Connectivity options
                         col_test1, col_test2 = st.columns(2)
                         with col_test1:
-                            test_connectivity = st.button("Test API Endpoint", key="test_api", use_container_width=True)
+                            test_connectivity = st.button("Test API Endpoint", key="test_api_modal", use_container_width=True)
                             if test_connectivity:
-                                st.markdown('<style>button[data-testid*="test_api"]::before { content: "\\f002"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 0.5rem; }</style>', unsafe_allow_html=True)
+                                st.markdown('<style>button[data-testid*="test_api_modal"]::before { content: "\\f002"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 0.5rem; }</style>', unsafe_allow_html=True)
                         with col_test2:
-                            show_ssh_tunnel = st.button("SSH Tunnel Setup", key="ssh_tunnel", use_container_width=True)
+                            show_modal_info = st.button("Modal Info", key="modal_info", use_container_width=True)
                         
                         if test_connectivity:
-                            # Test connectivity
+                            # Test Modal endpoint connectivity
                             try:
-                                from scripts.ssh_tunnel_helper import test_api_endpoint, check_port_connectivity
+                                import httpx
                                 from urllib.parse import urlparse
                                 
-                                # Check port first
-                                parsed = urlparse(api_endpoint)
-                                host = parsed.hostname or instance_ip
-                                port = parsed.port or 8000
-                                
-                                with st.spinner("Testing connectivity..."):
-                                    port_open = check_port_connectivity(host, port, timeout=5.0)
+                                with st.spinner("Testing Modal endpoint..."):
+                                    # Test API with a simple request
+                                    test_payload = {
+                                        "messages": [{"role": "user", "content": "test"}],
+                                        "max_tokens": 10
+                                    }
                                     
-                                    if port_open:
-                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Port {port} is accessible!</div>', unsafe_allow_html=True)
-                                        
-                                        # Test API
-                                        success, message = test_api_endpoint(api_endpoint, timeout=10.0)
-                                        if success:
-                                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
+                                    try:
+                                        response = httpx.post(api_endpoint, json=test_payload, timeout=10.0)
+                                        if response.status_code == 200:
+                                            st.success("✅ Modal endpoint is working!")
+                                            st.json(response.json())
                                         else:
-                                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> {message}</div>', unsafe_allow_html=True)
+                                            st.warning(f"⚠️ Endpoint returned status {response.status_code}: {response.text[:200]}")
+                                    except httpx.ConnectError:
+                                        st.error("❌ Cannot connect to Modal endpoint. Check if deployment is active.")
+                                    except Exception as e:
+                                        st.error(f"❌ Error testing endpoint: {e}")
+                            except Exception as e:
+                                st.error(f"Error testing Modal endpoint: {e}")
+                        
+                        if show_modal_info:
+                            st.info("""
+                            **Modal.com Info:**
+                            - Pay-per-use: Only charged when running (per second)
+                            - Auto-scaling: Handles traffic automatically
+                            - No idle costs: Containers shut down after 5 min idle
+                            - Check deployment status: `python -m modal dashboard`
+                            """)
+                    else:
+                        # Modal.com selected but no endpoint found
+                        st.warning("⚠️ Please configure Modal endpoint or deploy first")
+                        st.info("""
+                        **To deploy:**
+                        1. Run: `modal deploy modal_deploy.py`
+                        2. Get endpoint URL from Modal dashboard
+                        3. Add to .env: `MODAL_ENDPOINT_CHAT=<your-endpoint-url>`
+                        """)
+                        st.info(f"💡 **Current endpoint value:** `{api_endpoint or 'Not set'}`")
+                        st.stop()
+                elif defender_type == "Lambda Cloud" and api_endpoint:
+                    # Test connectivity for Lambda
+                    col_test1, col_test2 = st.columns(2)
+                    with col_test1:
+                        test_connectivity = st.button("Test API Endpoint", key="test_api_lambda", use_container_width=True)
+                    with col_test2:
+                        show_ssh_tunnel = st.button("SSH Tunnel Setup", key="ssh_tunnel_lambda", use_container_width=True)
+                    
+                    if test_connectivity:
+                        # Test connectivity
+                        try:
+                            from scripts.ssh_tunnel_helper import test_api_endpoint, check_port_connectivity
+                            from urllib.parse import urlparse
+                            
+                            # Check port first
+                            parsed = urlparse(api_endpoint)
+                            host = parsed.hostname or instance_ip
+                            port = parsed.port or 8000
+                            
+                            with st.spinner("Testing connectivity..."):
+                                port_open = check_port_connectivity(host, port, timeout=5.0)
+                                
+                                if port_open:
+                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Port {port} is accessible!</div>', unsafe_allow_html=True)
+                                    
+                                    # Test API
+                                    success, message = test_api_endpoint(api_endpoint, timeout=10.0)
+                                    if success:
+                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
                                     else:
-                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Port {port} is NOT accessible - blocked by firewall</div>', unsafe_allow_html=True)
-                                        st.warning("""
-                                        **Port is blocked by Lambda Cloud security group**
-                                        
-                                        **Quick Fix - Use SSH Tunnel:**
-                                        1. Run this command in a terminal:
+                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> {message}</div>', unsafe_allow_html=True)
+                                else:
+                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Port {port} is NOT accessible - blocked by firewall</div>', unsafe_allow_html=True)
+                                    st.warning("""
+                                    **Port is blocked by Lambda Cloud security group**
+                                    
+                                    **Quick Fix - Use SSH Tunnel:**
+                                    1. Run this command in a terminal:
                                            ```
                                            python scripts/ssh_tunnel_helper.py --ip {} --key moses.pem
                                            ```
                                         2. Update endpoint to: `http://localhost:8000/v1/chat/completions`
                                         3. Keep the tunnel running while evaluating
                                         """.format(instance_ip))
-                            except Exception as e:
-                                st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Error testing connectivity: {str(e)[:200]}</div>', unsafe_allow_html=True)
+                        except Exception as e:
+                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Error testing connectivity: {str(e)[:200]}</div>', unsafe_allow_html=True)
                         
                         if show_ssh_tunnel:
                             st.info("""
@@ -1864,6 +2080,11 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                     st.markdown('<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem; color: #06b6d4;"></i> Consider using SSH tunnel as workaround</div>', unsafe_allow_html=True)
                 else:
                     st.error("Please configure defender properly")
+                    st.stop()
+                
+                # Safety check: ensure defender is defined
+                if defender is None:
+                    st.error("Defender not properly configured. Please check your settings.")
                     st.stop()
                 
                 st.session_state.arena.add_defender(defender)

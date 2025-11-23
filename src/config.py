@@ -50,6 +50,13 @@ class Settings(BaseSettings):
         default=None, alias="LAMBDA_FILESYSTEM_ID"
     )
     
+    # Modal.com
+    modal_api_key: Optional[str] = Field(default=None, alias="MODAL_API_KEY")
+    modal_secret: Optional[str] = Field(default=None, alias="MODAL_SECRET")
+    modal_endpoint: Optional[str] = Field(default=None, alias="MODAL_ENDPOINT_JAILBREAK_GENOME_SCANNER")
+    modal_chat_endpoint: Optional[str] = Field(default=None, alias="MODAL_ENDPOINT_CHAT")
+    modal_completions_endpoint: Optional[str] = Field(default=None, alias="MODAL_ENDPOINT_COMPLETIONS")
+    
     # ChromaDB Configuration
     chroma_host: str = Field(default="localhost", alias="CHROMA_HOST")
     chroma_port: int = Field(default=8000, alias="CHROMA_PORT")

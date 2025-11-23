@@ -512,8 +512,23 @@ class LambdaDefender:
                 log.error(f"Network error after {self.max_retries} retries: {e}")
                 raise
         except Exception as e:
-            log.error(f"Unexpected error in request: {e}")
-            raise
+            # Handle httpx internal errors (like connection pool cleanup issues)
+            error_msg = str(e)
+            if "list.remove" in error_msg or "not in list" in error_msg:
+                # This is an httpx internal error, likely from connection pool cleanup
+                # It's safe to treat as a connection error and retry
+                log.debug(f"Connection pool error (httpx internal): {e}")
+                if retry_count < self.max_retries:
+                    wait_time = self.retry_delay * (2 ** retry_count)
+                    log.warning(f"Connection pool error, retrying in {wait_time:.1f}s (attempt {retry_count + 1}/{self.max_retries})")
+                    await asyncio.sleep(wait_time)
+                    return await self._make_request_with_retry(client, api_url, payload, retry_count + 1)
+                else:
+                    log.error(f"Connection pool error after {self.max_retries} retries: {e}")
+                    raise ConnectionError(f"Connection pool error: {e}") from e
+            else:
+                log.error(f"Unexpected error in request: {e}")
+                raise
     
     async def generate_response(self, prompt: str, **kwargs) -> str:
         """
@@ -681,12 +696,18 @@ class LambdaDefender:
             except (httpx.ConnectTimeout, httpx.ConnectError, httpx.NetworkError) as e:
                 # Provide helpful error message based on endpoint type
                 if "localhost" in self.api_endpoint or "127.0.0.1" in self.api_endpoint:
+                    # Extract port from endpoint if possible
+                    import re
+                    port_match = re.search(r':(\d+)', self.api_endpoint)
+                    port = port_match.group(1) if port_match else "8000"
+                    
                     error_msg = (
                         f"Connection error: Cannot reach API endpoint at {self.api_endpoint}.\n"
-                        f"This is a localhost endpoint - make sure:\n"
-                        f"1. SSH tunnel is active: ssh -L 8000:localhost:8000 ubuntu@<instance_ip>\n"
+                        f"This is a localhost endpoint (SSH tunnel) - make sure:\n"
+                        f"1. SSH tunnel is active and running: ssh -i moses.pem -N -L {port}:localhost:8000 ubuntu@<instance_ip>\n"
                         f"2. vLLM server is running on the Lambda instance\n"
-                        f"3. The tunnel is forwarding port 8000 correctly\n"
+                        f"3. The tunnel is forwarding port {port} correctly\n"
+                        f"4. Or use direct IP endpoint if port 8000 is open\n"
                         f"Original error: {str(e)}"
                     )
                 else:
