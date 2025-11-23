@@ -29,168 +29,471 @@ from src.utils.logger import setup_logger, log
 
 # Page config
 st.set_page_config(
-    page_title="Jailbreak Arena",
-    page_icon="⚔️",
+    page_title="JGS - Active Defense Infrastructure",
+    page_icon=None,
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
         'Get Help': None,
         'Report a bug': None,
-        'About': "Jailbreak Arena - Real-time AI Safety Evaluation Platform"
+        'About': "Jailbreak Genome Scanner - Automated Red-Teaming & Threat Radar System"
     }
 )
 
-# Professional dark theme CSS with subtle animations
+# Premium Glassmorphic Design - World-Class Professional Theme
 st.markdown("""
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 <style>
-    /* Main theme - Dark */
-    .main {
-        background-color: #0a0a0a;
-        color: #e0e0e0;
+    /* Import premium fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    
+    /* Icon styling */
+    .icon {
+        display: inline-block;
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: inherit;
+        vertical-align: middle;
     }
     
-    /* Streamlit base styling */
+    .icon-success {
+        color: #22c55e;
+    }
+    
+    .icon-error {
+        color: #ef4444;
+    }
+    
+    .icon-warning {
+        color: #f59e0b;
+    }
+    
+    .icon-info {
+        color: #06b6d4;
+    }
+    
+    /* Root variables for consistent theming - Professional Blue/Cyan */
+    :root {
+        --primary-glow: rgba(6, 182, 212, 0.4);
+        --success-glow: rgba(34, 197, 94, 0.4);
+        --danger-glow: rgba(239, 68, 68, 0.4);
+        --glass-bg: rgba(15, 23, 42, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glass-shadow: rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Animated gradient background - Deep Blue/Teal Professional */
     .stApp {
-        background-color: #0a0a0a;
+        background: linear-gradient(135deg, #0a0e1a 0%, #0f172a 25%, #1e293b 50%, #0f172a 75%, #0a0e1a 100%);
+        background-size: 400% 400%;
+        animation: gradientShift 15s ease infinite;
+        position: relative;
+        min-height: 100vh;
     }
     
-    /* Header styling */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+            radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+        pointer-events: none;
+        z-index: 0;
+        animation: float 20s ease-in-out infinite;
+    }
+    
+    @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translate(0, 0) scale(1); }
+        33% { transform: translate(30px, -30px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+    
+    /* Main content area - Glassmorphic */
+    .main {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Premium Header with Glass Effect - Professional Blue */
     .main-header {
-        font-size: 2.5rem;
-        font-weight: 700;
+        font-size: 3rem;
+        font-weight: 800;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         text-align: center;
-        color: #ffffff;
-        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #ffffff 0%, #06b6d4 50%, #0ea5e9 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.03em;
         margin-bottom: 2rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #333333;
-        animation: fadeIn 0.6s ease-in;
+        padding: 2rem 0;
+        position: relative;
+        animation: fadeInDown 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        text-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
     }
     
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
+    .main-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, rgba(6, 182, 212, 0.8), transparent);
+        border-radius: 3px;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.6);
+        animation: expandLine 1s ease-out 0.5s both;
     }
     
-    /* Professional stat boxes */
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    @keyframes expandLine {
+        from {
+            width: 0;
+            opacity: 0;
+        }
+        to {
+            width: 200px;
+            opacity: 1;
+        }
+    }
+    
+    /* Glassmorphic Stat Boxes */
     .stat-box {
-        background: #1a1a1a;
-        padding: 1.5rem;
-        border-radius: 8px;
-        border: 1px solid #333333;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 2rem;
         text-align: center;
-        transition: all 0.3s ease;
-        animation: slideUp 0.4s ease-out;
-        color: #e0e0e0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+        color: #e0e7ff;
+        box-shadow: 
+            0 8px 32px var(--glass-shadow),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-box::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.5s;
+    }
+    
+    .stat-box:hover::before {
+        left: 100%;
     }
     
     .stat-box:hover {
-        border-color: #555555;
-        box-shadow: 0 4px 12px rgba(255,255,255,0.1);
-        transform: translateY(-2px);
-        background: #222222;
+        transform: translateY(-8px) scale(1.02);
+        border-color: rgba(6, 182, 212, 0.5);
+        box-shadow: 
+            0 20px 60px rgba(6, 182, 212, 0.3),
+            0 0 0 1px rgba(6, 182, 212, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        background: rgba(15, 23, 42, 0.85);
     }
     
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+    @keyframes slideUpFade {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
     
-    /* Live battle container */
+    /* Premium Live Battle Container - Glassmorphic */
     .live-battle {
-        background: #1a1a1a;
-        padding: 2rem;
-        border-radius: 8px;
-        border: 2px solid #444444;
-        margin: 1rem 0;
-        animation: pulse 2s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { border-color: #444444; }
-        50% { border-color: #666666; }
-    }
-    
-    /* Log styling */
-    .attack-log {
-        background: #1a1a1a;
-        padding: 1rem;
-        border-radius: 6px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #555555;
-        font-family: 'Courier New', monospace;
-        font-size: 0.875rem;
-        color: #e0e0e0;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    @keyframes slideIn {
-        from { opacity: 0; transform: translateX(-10px); }
-        to { opacity: 1; transform: translateX(0); }
-    }
-    
-    /* Success - green accent */
-    .success-log {
-        background: #1a2e1a;
-        padding: 1rem;
-        border-radius: 6px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #28a745;
-        font-family: 'Courier New', monospace;
-        color: #a0e0a0;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    /* Fail - red accent */
-    .fail-log {
-        background: #2e1a1a;
-        padding: 1rem;
-        border-radius: 6px;
-        margin: 0.5rem 0;
-        border-left: 3px solid #dc3545;
-        font-family: 'Courier New', monospace;
-        color: #e0a0a0;
-        animation: slideIn 0.3s ease-out;
-    }
-    
-    /* Progress indicator */
-    .progress-indicator {
-        width: 100%;
-        height: 4px;
-        background: #333333;
-        border-radius: 2px;
+        background: var(--glass-bg);
+        backdrop-filter: blur(30px) saturate(180%);
+        -webkit-backdrop-filter: blur(30px) saturate(180%);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin: 2rem 0;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+        position: relative;
         overflow: hidden;
-        animation: shimmer 2s infinite;
+        animation: slideUpFade 0.8s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
-    @keyframes shimmer {
-        0% { background-position: -1000px 0; }
-        100% { background-position: 1000px 0; }
+    .live-battle::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, 
+            transparent,
+            rgba(6, 182, 212, 0.8),
+            rgba(14, 165, 233, 0.8),
+            rgba(6, 182, 212, 0.8),
+            transparent);
+        animation: pulseGlow 2s ease-in-out infinite;
     }
     
-    /* Sidebar styling */
+    @keyframes pulseGlow {
+        0%, 100% {
+            opacity: 0.5;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
+        }
+        50% {
+            opacity: 1;
+            box-shadow: 0 0 40px rgba(6, 182, 212, 0.6);
+        }
+    }
+    
+    /* Premium Log Styling - Glass Cards */
+    .attack-log,
+    .success-log,
+    .fail-log {
+        background: var(--glass-bg);
+        backdrop-filter: blur(15px) saturate(180%);
+        -webkit-backdrop-filter: blur(15px) saturate(180%);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1.25rem 1.5rem;
+        margin: 0.75rem 0;
+        font-family: 'JetBrains Mono', 'Courier New', monospace;
+        font-size: 0.875rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+        box-shadow: 
+            0 4px 16px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .attack-log {
+        border-left: 3px solid rgba(6, 182, 212, 0.6);
+        color: #a5f3fc;
+    }
+    
+    .success-log {
+        background: rgba(34, 197, 94, 0.1);
+        border-left: 3px solid rgba(34, 197, 94, 0.8);
+        border-color: rgba(34, 197, 94, 0.2);
+        color: #86efac;
+        box-shadow: 
+            0 4px 16px rgba(34, 197, 94, 0.2),
+            0 0 0 1px rgba(34, 197, 94, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .fail-log {
+        background: rgba(239, 68, 68, 0.1);
+        border-left: 3px solid rgba(239, 68, 68, 0.8);
+        border-color: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        box-shadow: 
+            0 4px 16px rgba(239, 68, 68, 0.2),
+            0 0 0 1px rgba(239, 68, 68, 0.1),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    .attack-log:hover,
+    .success-log:hover,
+    .fail-log:hover {
+        transform: translateX(8px) scale(1.01);
+        box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    /* Glassmorphic Sidebar */
     [data-testid="stSidebar"] {
-        background-color: #1a1a1a;
+        background: rgba(15, 15, 30, 0.8) !important;
+        backdrop-filter: blur(20px) saturate(180%) !important;
+        -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+        border-right: 1px solid var(--glass-border) !important;
     }
     
-    /* Metric cards */
+    /* Premium Metric Cards */
     .metric-card {
-        background: #1a1a1a;
-        border: 1px solid #333333;
-        border-radius: 8px;
-        padding: 1rem;
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--glass-border);
+        border-radius: 16px;
+        padding: 1.5rem;
         text-align: center;
-        transition: all 0.3s ease;
-        color: #e0e0e0;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        color: #e0e7ff;
+        box-shadow: 
+            0 8px 24px rgba(0, 0, 0, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     
     .metric-card:hover {
-        border-color: #555555;
-        transform: scale(1.02);
-        background: #222222;
+        transform: translateY(-4px) scale(1.03);
+        border-color: rgba(6, 182, 212, 0.5);
+        box-shadow: 
+            0 16px 40px rgba(6, 182, 212, 0.3),
+            0 0 0 1px rgba(6, 182, 212, 0.2);
+        background: rgba(15, 23, 42, 0.9);
     }
     
-    /* Subtle loading animation */
+    /* Premium Buttons with Glass Effect - Professional Cyan/Blue */
+    .stButton > button {
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(14, 165, 233, 0.2)) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        font-family: 'Inter', sans-serif !important;
+        padding: 0.75rem 1.5rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 
+            0 4px 16px rgba(6, 182, 212, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stButton > button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .stButton > button:hover::before {
+        left: 100%;
+    }
+    
+    .stButton > button:hover {
+        transform: translateY(-2px) scale(1.02) !important;
+        background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(14, 165, 233, 0.3)) !important;
+        box-shadow: 
+            0 8px 24px rgba(6, 182, 212, 0.4),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    
+    .stButton > button:active {
+        transform: translateY(0) scale(0.98) !important;
+    }
+    
+    /* Premium Progress Bar - Cyan/Blue */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #06b6d4, #0ea5e9, #3b82f6) !important;
+        border-radius: 10px !important;
+        box-shadow: 0 0 20px rgba(6, 182, 212, 0.5) !important;
+        animation: shimmer 2s infinite !important;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -100% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    /* Premium Typography */
+    h1, h2, h3, h4, h5, h6 {
+        color: #ffffff !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.02em !important;
+    }
+    
+    p, label, .stText {
+        color: #e0e7ff !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Premium Input Fields - Glass */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > select {
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 12px !important;
+        color: #ffffff !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > select:focus {
+        border-color: rgba(6, 182, 212, 0.6) !important;
+        box-shadow: 
+            0 0 0 3px rgba(6, 182, 212, 0.1),
+            inset 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        outline: none !important;
+    }
+    
+    /* Premium Expander */
+    .streamlit-expanderHeader {
+        background: var(--glass-bg) !important;
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        border: 1px solid var(--glass-border) !important;
+        border-radius: 12px !important;
+        color: #e0e7ff !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .streamlit-expanderHeader:hover {
+        background: rgba(15, 23, 42, 0.9) !important;
+        border-color: rgba(6, 182, 212, 0.4) !important;
+    }
+    
+    /* Loading Animation */
     .loading-dots::after {
         content: '...';
         animation: dots 1.5s steps(4, end) infinite;
@@ -202,52 +505,131 @@ st.markdown("""
         60%, 100% { content: '...'; }
     }
     
-    /* Professional button */
-    .stButton > button {
-        background-color: #333333;
-        color: #ffffff;
-        border-radius: 6px;
-        transition: all 0.3s ease;
-        border: 1px solid #555555;
+    /* Smooth scrollbar */
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
     }
     
-    .stButton > button:hover {
-        background-color: #444444;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(255,255,255,0.1);
+    ::-webkit-scrollbar-track {
+        background: rgba(15, 15, 30, 0.5);
+        border-radius: 10px;
     }
     
-    /* Progress bar */
-    .stProgress > div > div > div > div {
-        background-color: #28a745;
+    ::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, rgba(6, 182, 212, 0.6), rgba(14, 165, 233, 0.6));
+        border-radius: 10px;
+        border: 2px solid rgba(15, 23, 42, 0.5);
     }
     
-    /* Text colors */
-    h1, h2, h3, h4, h5, h6 {
-        color: #ffffff !important;
+    ::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, rgba(6, 182, 212, 0.8), rgba(14, 165, 233, 0.8));
     }
     
-    p, label, .stText {
-        color: #e0e0e0 !important;
+    /* Premium metric numbers - Cyan/White */
+    [data-testid="stMetricValue"] {
+        font-family: 'Inter', sans-serif !important;
+        font-weight: 700 !important;
+        background: linear-gradient(135deg, #ffffff, #06b6d4);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
-    /* Input fields */
-    .stTextInput > div > div > input {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-        border: 1px solid #333333;
+    /* Smooth transitions for all elements */
+    * {
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     }
     
-    .stSelectbox > div > div > select {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-        border: 1px solid #333333;
+    /* Button icons via CSS */
+    button[data-testid*="test_api"]::before {
+        content: "\\f002";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
     }
     
-    /* Expander */
-    .streamlit-expanderHeader {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
+    button[data-testid*="ssh_tunnel"]::before {
+        content: "\\f0c1";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    button[data-testid*="test_current"]::before {
+        content: "\\f002";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+    }
+    
+    /* Status indicators */
+    .status-running::before {
+        content: "\\f2f9";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Tab icons via CSS - Add icons to tab labels */
+    button[data-baseweb="tab"][aria-selected="true"],
+    button[data-baseweb="tab"][aria-selected="false"] {
+        font-family: 'Inter', sans-serif !important;
+        color: #e0e7ff !important;
+        position: relative;
+    }
+    
+    /* Trends tab icon */
+    button[data-baseweb="tab"]:has-text("Trends")::before,
+    div[data-testid*="stTabs"] button:contains("Trends")::before {
+        content: "\\f201";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #06b6d4;
+    }
+    
+    /* Strategies tab icon */
+    button[data-baseweb="tab"]:has-text("Strategies")::before {
+        content: "\\f140";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        margin-right: 0.5rem;
+        color: #06b6d4;
+    }
+    
+    /* Alternative: Use CSS attribute selectors for tabs */
+    div[data-testid="stTabs"] button {
+        font-family: 'Inter', sans-serif !important;
+    }
+    
+    /* Style tabs with glassmorphic effect */
+    div[data-testid="stTabs"] > div {
+        background: rgba(15, 23, 42, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 12px !important;
+        padding: 0.5rem !important;
+    }
+    
+    div[data-testid="stTabs"] button[aria-selected="true"] {
+        background: rgba(6, 182, 212, 0.2) !important;
+        border-bottom: 2px solid #06b6d4 !important;
+        color: #06b6d4 !important;
+    }
+    
+    div[data-testid="stTabs"] button[aria-selected="false"] {
+        color: #94a3b8 !important;
+    }
+    
+    div[data-testid="stTabs"] button:hover {
+        background: rgba(6, 182, 212, 0.1) !important;
+        color: #06b6d4 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -324,9 +706,10 @@ def create_jvi_gauge(value):
     fig.update_layout(
         height=350,
         margin=dict(l=20, r=20, t=60, b=20),
-        paper_bgcolor='#1a1a1a',
-        plot_bgcolor='#1a1a1a',
-        font={'color': '#e0e0e0', 'family': 'Arial, sans-serif'}
+        paper_bgcolor='rgba(26, 26, 38, 0.5)',
+        plot_bgcolor='rgba(26, 26, 38, 0.3)',
+        font={'color': '#e0e7ff', 'family': 'Inter, -apple-system, BlinkMacSystemFont, sans-serif', 'size': 12},
+        showlegend=False
     )
     return fig
 
@@ -537,25 +920,50 @@ def create_leaderboard_chart(attackers):
     return fig
 
 
+def make_json_serializable(obj):
+    """Convert objects to JSON-serializable types (sets to lists, etc.)."""
+    if isinstance(obj, set):
+        return list(obj)
+    elif isinstance(obj, dict):
+        return {k: make_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [make_json_serializable(item) for item in obj]
+    elif hasattr(obj, '__dict__'):
+        # Handle objects with __dict__ (like Enum values)
+        try:
+            return obj.value if hasattr(obj, 'value') else str(obj)
+        except:
+            return str(obj)
+    else:
+        return obj
+
+
 async def gather_recent_attacks(scraper, instance_id=None):
-    """Use Lambda scraper to gather recent attack patterns."""
+    """Use Lambda scraper to gather recent attack patterns for intelligence gathering."""
     if not scraper:
         return None
     
     try:
-        events = await scraper.scrape_recent_events(days_back=7, max_results=20)
+        events = await scraper.scrape_recent_events(days_back=7, max_results=15)
         
         if events and len(events) > 0:
-            # Format events into readable text
+            # Format events into readable text with better structure
             formatted = []
             for event in events[:10]:  # Limit to 10 most relevant
                 if event and hasattr(event, 'title'):
+                    # Clean title
+                    title = event.title.strip()
+                    source = getattr(event, 'source', 'Unknown')
+                    category = getattr(event, 'category', 'jailbreak')
+                    url = getattr(event, 'url', '')
+                    content = getattr(event, 'content', '')[:150] if hasattr(event, 'content') else ''
+                    
                     formatted.append(
-                        f"**{event.title}**\n"
-                        f"Source: {event.source}\n"
-                        f"Category: {event.category}\n"
-                        f"Content: {event.content[:200] if event.content else 'N/A'}...\n"
-                        f"URL: {event.url}\n"
+                        f"**{title}**\n"
+                        f"Source: {source}\n"
+                        f"Category: {category}\n"
+                        f"{'Content: ' + content + '...' if content else ''}\n"
+                        f"URL: {url}\n"
                     )
             if formatted:
                 return "\n\n".join(formatted)
@@ -569,9 +977,14 @@ async def gather_recent_attacks(scraper, instance_id=None):
 def main():
     """Main dashboard application."""
     
-    # Professional header
-    st.markdown('<div class="main-header">JAILBREAK ARENA</div>', unsafe_allow_html=True)
-    st.markdown('<p style="text-align: center; color: #999999; margin-top: -1rem;">Real-time AI Safety Evaluation</p>', unsafe_allow_html=True)
+    # Professional header with icon
+    st.markdown("""
+    <div class="main-header">
+        <i class="fas fa-shield-alt" style="font-size: 0.8em; vertical-align: middle; margin-right: 0.5rem;"></i>
+        JAILBREAK GENOME SCANNER
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #999999; margin-top: -1rem;">Active Defense Infrastructure - Automated Red-Teaming & Threat Radar</p>', unsafe_allow_html=True)
     
     # Load deployment config if available (for pre-filling)
     import json
@@ -659,7 +1072,7 @@ def main():
             )
             
             if instance_ip:
-                st.info(f"📍 Instance IP: {instance_ip}")
+                st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> Instance IP: {instance_ip}</div>', unsafe_allow_html=True)
                 
                 # Check connectivity status
                 if api_endpoint and not api_endpoint.startswith("localhost"):
@@ -673,8 +1086,8 @@ def main():
                         if host and host != "localhost":
                             port_open = check_port_connectivity(host, port, timeout=3.0)
                             if not port_open:
-                                st.error("❌ **Port {} is blocked!** Cannot connect externally.".format(port))
-                                with st.expander("🔗 Quick Fix: Use SSH Tunnel", expanded=True):
+                                st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> <strong>Port {port} is blocked!</strong> Cannot connect externally.</div>', unsafe_allow_html=True)
+                                with st.expander('<i class="fas fa-link" style="margin-right: 0.5rem;"></i> Quick Fix: Use SSH Tunnel', expanded=True):
                                     st.markdown("**Port is blocked by firewall. Use SSH tunnel:**")
                                     st.code(f"python scripts/ssh_tunnel_helper.py --ip {instance_ip} --key moses.pem", language="bash")
                                     st.markdown("Then change endpoint to: `http://localhost:8000/v1/chat/completions`")
@@ -683,8 +1096,8 @@ def main():
                         pass  # Skip check if it fails
                 
                 if not api_endpoint or "<ip>" in api_endpoint:
-                    st.warning("⚠️ **vLLM not set up yet!** The API endpoint needs to be configured.")
-                    with st.expander("🔧 Set up vLLM on Lambda instance", expanded=True):
+                    st.markdown('<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> <strong>vLLM not set up yet!</strong> The API endpoint needs to be configured.</div>', unsafe_allow_html=True)
+                    with st.expander("Set up vLLM on Lambda instance", expanded=True):
                         st.markdown("**Quick Setup:**")
                         st.code(f"""
 # Run this script to set up vLLM:
@@ -701,7 +1114,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                         st.markdown("**After setup, use this endpoint:**")
                         st.code(f"http://{instance_ip}:8000/v1/chat/completions", language="text")
                 else:
-                    st.success(f"✅ Endpoint configured: {api_endpoint}")
+                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Endpoint configured: {api_endpoint}</div>', unsafe_allow_html=True)
             api_key = None
         else:
             model_name = "demo-model-v1"
@@ -743,14 +1156,14 @@ python3 -m vllm.entrypoints.openai.api_server \\
             difficulty_range = None
         
         # Lambda Scraper config
-        st.subheader("Recent Data Gathering")
-        use_scraper = st.checkbox("Gather Recent Attack Data", value=True, 
-                                   help="Use Lambda scraper to gather recent jailbreak patterns from the web")
+        st.subheader("Intelligence Gathering")
+        use_scraper = st.checkbox("Gather Recent Attack Patterns", value=True, 
+                                   help="Scrape web sources (GitHub, forums) to identify emerging jailbreak techniques")
         if use_scraper:
             # Pre-fill with deployed instance if available
-            scraper_instance_id = st.text_input("Lambda Instance ID (for scraping)", 
-                                                value=default_instance,
-                                                help="Optional: Use a Lambda instance for more powerful scraping")
+            scraper_instance_id = st.text_input("Lambda Instance ID (Optional)", 
+                                                value=default_instance if default_instance else "",
+                                                help="Optional: Use a Lambda instance for more powerful web scraping")
         else:
             scraper_instance_id = None
         
@@ -779,23 +1192,76 @@ python3 -m vllm.entrypoints.openai.api_server \\
         if not st.session_state.arena:
             st.session_state.arena = JailbreakArena()
         
-        # Gather recent data from Lambda scraper if enabled
+        # Gather recent data from Lambda scraper if enabled (non-blocking)
         if use_scraper:
-            try:
-                with st.spinner("Gathering recent attack patterns from web sources"):
+            import threading
+            
+            # Show initial status in main thread
+            scraper_status = st.empty()
+            scraper_status.info("Gathering recent attack patterns in background...")
+            
+            def run_scraper_background():
+                """Run scraper in background thread."""
+                try:
+                    # Use logging instead of Streamlit components in background thread
+                    log.info("Gathering recent attack patterns in background...")
                     scraper = LambdaWebScraper(instance_id=scraper_instance_id if scraper_instance_id else None)
                     recent_data = run_async(gather_recent_attacks(scraper, scraper_instance_id))
                     
                     if recent_data:
                         st.session_state.scraper_data = recent_data
-                        with st.expander("Recent Attack Patterns from Web Sources", expanded=False):
-                            st.markdown("**Gathered from web sources (GitHub, forums, etc.):**")
-                            st.markdown(recent_data)
+                        st.session_state.scraper_status = "complete"
+                        log.info("Scraper completed successfully")
                     else:
-                        st.info("No recent attack patterns found. Scraper may need more time or sources.")
-            except Exception as e:
-                st.warning(f"Scraper encountered an issue: {e}. Continuing without recent data...")
-                st.session_state.scraper_data = None
+                        st.session_state.scraper_data = None
+                        st.session_state.scraper_status = "no_data"
+                        log.info("Scraper found no data")
+                except Exception as e:
+                    st.session_state.scraper_data = None
+                    st.session_state.scraper_status = f"error: {str(e)}"
+                    log.warning(f"Scraper encountered an issue: {e}. Continuing without recent data...")
+            
+            # Start scraper in background thread
+            scraper_thread = threading.Thread(target=run_scraper_background, daemon=True)
+            scraper_thread.start()
+            
+            # Check status and update UI in main thread
+            if 'scraper_status' in st.session_state:
+                if st.session_state.scraper_status == "complete":
+                    scraper_status.empty()
+                elif st.session_state.scraper_status.startswith("error"):
+                    scraper_status.warning(f"Scraper error: {st.session_state.scraper_status.split(':', 1)[1]}")
+                elif st.session_state.scraper_status == "no_data":
+                    scraper_status.empty()
+            
+            # Show scraper data if already available
+            if st.session_state.scraper_data:
+                st.markdown("---")
+                with st.expander("Recent Attack Patterns from Web Sources", expanded=True):
+                    st.markdown("""
+                    <div style="padding: 1rem; background: rgba(6, 182, 212, 0.1); border-radius: 12px; border-left: 4px solid #06b6d4; margin-bottom: 1rem;">
+                    <strong>Intelligence Gathering:</strong> These patterns are gathered from GitHub, forums, and research sources to identify emerging jailbreak techniques.
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
+                    # Parse and display in a cleaner format
+                    events = st.session_state.scraper_data.split("\n\n")
+                    for i, event in enumerate(events[:8], 1):  # Show top 8
+                        if event.strip():
+                            lines = event.strip().split("\n")
+                            if len(lines) >= 2:
+                                title = lines[0].replace("**", "").strip()
+                                source_line = next((l for l in lines if l.startswith("Source:")), "")
+                                category_line = next((l for l in lines if l.startswith("Category:")), "")
+                                url_line = next((l for l in lines if l.startswith("URL:")), "")
+                                
+                                st.markdown(f"""
+                                <div style="padding: 0.75rem; margin: 0.5rem 0; background: rgba(15, 23, 42, 0.5); border-radius: 8px; border-left: 3px solid #06b6d4;">
+                                <strong style="color: #06b6d4;">{title}</strong><br>
+                                <small style="color: #999;">{source_line} | {category_line}</small><br>
+                                <small style="color: #666;"><a href="{url_line.replace('URL: ', '')}" target="_blank" style="color: #06b6d4;">{url_line.replace('URL: ', '')}</a></small>
+                                </div>
+                                """, unsafe_allow_html=True)
         
         # Create defender
         with st.spinner("Setting up Defender"):
@@ -830,10 +1296,10 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                 # Try default vLLM endpoint
                                 api_endpoint = f"http://{ip}:8000/v1/chat/completions"
                                 st.info(f"Auto-detected endpoint: {api_endpoint}")
-                                st.warning("⚠️ Make sure vLLM is running on the instance. If not, set up the API server first.")
+                                st.markdown('<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> Make sure vLLM is running on the instance. If not, set up the API server first.</div>', unsafe_allow_html=True)
                         except Exception as e:
                             st.warning(f"Could not auto-detect endpoint: {e}")
-                            st.info("💡 You can manually set the API endpoint if vLLM is running on a different port")
+                            st.markdown('<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem; color: #06b6d4;"></i> You can manually set the API endpoint if vLLM is running on a different port</div>', unsafe_allow_html=True)
                     
                     defender = LLMDefender(
                         model_name=model_name,
@@ -876,17 +1342,19 @@ python3 -m vllm.entrypoints.openai.api_server \\
                         except Exception as e:
                             log.warning(f"Could not save API endpoint: {e}")
                     
-                    st.success(f"✅ Defender configured: {model_name} on instance {instance_id}")
+                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Defender configured: {model_name} on instance {instance_id}</div>', unsafe_allow_html=True)
                     if api_endpoint:
-                        st.info(f"📍 API Endpoint: {api_endpoint}")
+                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> API Endpoint: {api_endpoint}</div>', unsafe_allow_html=True)
                         
                         # Test API endpoint connectivity
                         # Connectivity options
                         col_test1, col_test2 = st.columns(2)
                         with col_test1:
-                            test_connectivity = st.button("🔍 Test API Endpoint", key="test_api", use_container_width=True)
+                            test_connectivity = st.button("Test API Endpoint", key="test_api", use_container_width=True)
+                            if test_connectivity:
+                                st.markdown('<style>button[data-testid*="test_api"]::before { content: "\\f002"; font-family: "Font Awesome 6 Free"; font-weight: 900; margin-right: 0.5rem; }</style>', unsafe_allow_html=True)
                         with col_test2:
-                            show_ssh_tunnel = st.button("🔗 SSH Tunnel Setup", key="ssh_tunnel", use_container_width=True)
+                            show_ssh_tunnel = st.button("SSH Tunnel Setup", key="ssh_tunnel", use_container_width=True)
                         
                         if test_connectivity:
                             # Test connectivity
@@ -903,16 +1371,16 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                     port_open = check_port_connectivity(host, port, timeout=5.0)
                                     
                                     if port_open:
-                                        st.success(f"✅ Port {port} is accessible!")
+                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Port {port} is accessible!</div>', unsafe_allow_html=True)
                                         
                                         # Test API
                                         success, message = test_api_endpoint(api_endpoint, timeout=10.0)
                                         if success:
-                                            st.success(f"✅ {message}")
+                                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
                                         else:
-                                            st.warning(f"⚠️ {message}")
+                                            st.markdown(f'<div style="padding: 0.75rem; background: rgba(245, 158, 11, 0.1); border-left: 3px solid rgba(245, 158, 11, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fcd34d;"><i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem; color: #f59e0b;"></i> {message}</div>', unsafe_allow_html=True)
                                     else:
-                                        st.error(f"❌ Port {port} is NOT accessible - blocked by firewall")
+                                        st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Port {port} is NOT accessible - blocked by firewall</div>', unsafe_allow_html=True)
                                         st.warning("""
                                         **Port is blocked by Lambda Cloud security group**
                                         
@@ -925,7 +1393,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                         3. Keep the tunnel running while evaluating
                                         """.format(instance_ip))
                             except Exception as e:
-                                st.error(f"❌ Error testing connectivity: {str(e)[:200]}")
+                                st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Error testing connectivity: {str(e)[:200]}</div>', unsafe_allow_html=True)
                         
                         if show_ssh_tunnel:
                             st.info("""
@@ -960,14 +1428,14 @@ python3 -m vllm.entrypoints.openai.api_server \\
                             # Test connectivity with current endpoint
                             st.markdown("---")
                             st.markdown("**Or test connectivity first:**")
-                            if st.button("🔍 Test Current Endpoint", key="test_current"):
+                            if st.button("Test Current Endpoint", key="test_current"):
                                 from scripts.ssh_tunnel_helper import test_api_endpoint
                                 success, message = test_api_endpoint(api_endpoint, timeout=5.0)
                                 if success:
-                                    st.success(f"✅ {message}")
+                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> {message}</div>', unsafe_allow_html=True)
                                 else:
-                                    st.error(f"❌ {message}")
-                                    st.info("💡 Consider using SSH tunnel as workaround")
+                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> {message}</div>', unsafe_allow_html=True)
+                                    st.markdown('<div style="padding: 0.75rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.6); border-radius: 6px; margin: 0.5rem 0; color: #a5f3fc;"><i class="fas fa-lightbulb" style="margin-right: 0.5rem; color: #06b6d4;"></i> Consider using SSH tunnel as workaround</div>', unsafe_allow_html=True)
                 else:
                     st.error("Please configure defender properly")
                     st.stop()
@@ -976,6 +1444,16 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 
                 # Generate attackers with proper parameter handling
                 try:
+                    # Show agent generation messages
+                    agent_status = st.empty()
+                    agent_status.markdown("""
+                    <div style="padding: 1rem; background: rgba(6, 182, 212, 0.1); border-left: 3px solid rgba(6, 182, 212, 0.8); border-radius: 6px; margin: 0.5rem 0;">
+                        <div style="color: #06b6d4; margin-bottom: 0.5rem;"><i class="fas fa-dna" style="margin-right: 0.5rem;"></i><strong>Bio-Radar Agent</strong> generating obfuscated pathogen synthesis prompts...</div>
+                        <div style="color: #06b6d4; margin-bottom: 0.5rem;"><i class="fas fa-shield-virus" style="margin-right: 0.5rem;"></i><strong>Cyber-Sentinel Agent</strong> generating zero-day exploit prompts with vulnerable code...</div>
+                        <div style="color: #a5f3fc;">Other strategies from database filling remaining slots...</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                    
                     if use_database and difficulty_range:
                         st.session_state.arena.generate_attackers(
                             num_strategies=num_attackers,
@@ -985,11 +1463,33 @@ python3 -m vllm.entrypoints.openai.api_server \\
                         st.session_state.arena.generate_attackers(
                             num_strategies=num_attackers
                         )
+                    
+                    # Verify BIO_HAZARD and CYBER_EXPLOIT are included
+                    attacker_strategies = [a.strategy for a in st.session_state.arena.attackers]
+                    has_bio = AttackStrategy.BIO_HAZARD in attacker_strategies
+                    has_cyber = AttackStrategy.CYBER_EXPLOIT in attacker_strategies
+                    
+                    if has_bio and has_cyber:
+                        agent_status.markdown("""
+                        <div style="padding: 1rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0;">
+                            <div style="color: #22c55e; margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i><strong>Bio-Radar Agent</strong> ready (obfuscated pathogen synthesis)</div>
+                            <div style="color: #22c55e; margin-bottom: 0.5rem;"><i class="fas fa-check-circle" style="margin-right: 0.5rem;"></i><strong>Cyber-Sentinel Agent</strong> ready (zero-day exploit with vulnerable code)</div>
+                            <div style="color: #86efac;">{0} total attackers generated</div>
+                        </div>
+                        """.format(len(st.session_state.arena.attackers)), unsafe_allow_html=True)
+                    else:
+                        log.warning(f"BIO_HAZARD or CYBER_EXPLOIT missing! Has BIO: {has_bio}, Has CYBER: {has_cyber}")
+                        agent_status.markdown("""
+                        <div style="padding: 1rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;">
+                            <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>Warning: Specialized agents may not be included
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
                 except TypeError as e:
                     # Fallback if difficulty_range not supported (shouldn't happen but safety check)
                     log.warning(f"difficulty_range parameter issue: {e}, using fallback")
                     st.session_state.arena.generate_attackers(num_strategies=num_attackers)
-                st.success("Defender ready")
+                st.markdown('<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Defender ready</div>', unsafe_allow_html=True)
                 
                 # Show database stats if using database
                 if use_database and st.session_state.arena.prompt_generator.prompt_db:
@@ -1000,23 +1500,31 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 st.error(f"Error setting up defender: {e}")
                 st.stop()
         
+        # Clear logs when starting new evaluation
+        if not st.session_state.battle_running:
+            st.session_state.logs = []
+        
         # Live battle interface
         st.markdown('<div class="live-battle">', unsafe_allow_html=True)
         
         # Enhanced header with status indicator
         col_header1, col_header2, col_header3 = st.columns([2, 1, 1])
         with col_header1:
-            st.subheader("⚔️ EVALUATION IN PROGRESS")
+            st.markdown('<h3 style="margin: 0; padding: 0.5rem 0;"><i class="fas fa-shield-alt" style="margin-right: 0.5rem; color: #06b6d4;"></i> EVALUATION IN PROGRESS</h3>', unsafe_allow_html=True)
         with col_header2:
-            st.markdown(f"**Start Time:** {datetime.now().strftime('%H:%M:%S')}")
+            start_time_str = datetime.now().strftime('%H:%M:%S')
+            st.markdown(f"**Start Time:** {start_time_str}")
+            if st.session_state.start_time is None:
+                st.session_state.start_time = time.time()
         with col_header3:
-            st.markdown(f"**Status:** 🔄 Running")
+            st.markdown('<i class="fas fa-sync-alt fa-spin" style="margin-right: 0.5rem;"></i> **Status:** Running', unsafe_allow_html=True)
         
         # Battle container
         battle_container = st.container()
-        stats_container = st.container()
-        leaderboard_container = st.container()
         logs_container = st.container()
+        
+        # Remove unused containers
+        # stats_container and leaderboard_container removed - not used
         
         # Enhanced progress bar with metrics
         progress_bar = st.progress(0)
@@ -1031,7 +1539,20 @@ python3 -m vllm.entrypoints.openai.api_server \\
         st.session_state.battle_running = True
         
         with battle_container:
-            st.markdown("### Round-by-Round Results")
+            st.markdown("### Live Threat Radar - Real-Time Defense")
+            st.markdown("*Watch attacks as planes flying toward threat zones. Blocked attacks explode, successful exploits pass through.*")
+            
+            # Load and display live threat radar visualization
+            radar_template_path = Path(__file__).parent / "templates" / "threat_radar_live.html"
+            if radar_template_path.exists():
+                with open(radar_template_path, 'r') as f:
+                    radar_html = f.read()
+                
+                # Create container for live radar
+                import streamlit.components.v1 as components
+                radar_container = st.empty()
+                with radar_container.container():
+                    components.html(radar_html, height=600)
         
         all_results = []
         
@@ -1039,30 +1560,336 @@ python3 -m vllm.entrypoints.openai.api_server \\
         total_attempts = num_rounds * num_attackers
         
         # Run evaluation once for all rounds (more efficient)
-        status_text.text(f"🚀 Starting evaluation: {num_rounds} rounds × {num_attackers} attackers = {total_attempts} total attack attempts")
-        
-        # Update metrics during evaluation
-        with metrics_col1:
-            st.metric("Rounds Completed", f"0/{num_rounds}")
-        with metrics_col2:
-            st.metric("Total Attempts", f"0/{total_attempts}")
-        with metrics_col3:
-            st.metric("Exploits", "0/0")
-        with metrics_col4:
-            elapsed = time.time() - st.session_state.start_time if st.session_state.start_time else 0
-            st.metric("Elapsed Time", f"{elapsed:.1f}s")
+        status_text.markdown(f'<i class="fas fa-rocket" style="margin-right: 0.5rem;"></i> Starting evaluation: {num_rounds} rounds × {num_attackers} attackers = {total_attempts} total attack attempts', unsafe_allow_html=True)
         
         try:
-            # Run full evaluation with progress tracking
-            progress_bar.progress(0.1)
-            status_text.text("⚙️ Setting up evaluation...")
+            # Initialize live progress tracking
+            progress_bar.progress(0.0)
+            status_text.markdown('Starting evaluation...', unsafe_allow_html=True)
             
-            # Run evaluation
-            results = run_async(st.session_state.arena.evaluate(rounds=num_rounds))
-            all_results = [results]  # Single result set for all rounds
+            # Create containers for live updates
+            live_logs_container = st.empty()
+            live_stats_container = st.empty()
+            
+            # Track progress in session state
+            if 'eval_progress' not in st.session_state:
+                st.session_state.eval_progress = {
+                    'completed_rounds': 0,
+                    'completed_attempts': 0,
+                    'completed_exploits': 0,
+                    'round_logs': []
+                }
+            
+            # Run evaluation round by round for live updates
+            all_round_results = []
+            completed_rounds = 0
+            completed_attempts = 0
+            completed_exploits = 0
+            
+            # Store real-time updates for batch processing
+            if 'realtime_updates' not in st.session_state:
+                st.session_state.realtime_updates = []
+            
+            # Real-time update function for visualization
+            def send_realtime_update(eval_result, round_num):
+                """Send real-time updates as each evaluation completes."""
+                try:
+                    # Prepare update data
+                    radar_update = {
+                        'type': 'evaluation_update',
+                        'id': str(eval_result.id) if hasattr(eval_result, 'id') else f"eval_{round_num}_{len(st.session_state.realtime_updates)}",
+                        'strategy': str(eval_result.attack_strategy.value) if hasattr(eval_result.attack_strategy, 'value') else str(eval_result.attack_strategy),
+                        'prompt': str(eval_result.prompt)[:50] if eval_result.prompt else '',
+                        'isJailbroken': eval_result.is_jailbroken if hasattr(eval_result, 'is_jailbroken') else eval_result.get('is_jailbroken', False),
+                        'severity': eval_result.severity.value if hasattr(eval_result.severity, 'value') else eval_result.severity
+                    }
+                    
+                    # Store update for immediate processing
+                    st.session_state.realtime_updates.append(radar_update)
+                    
+                    # Send update immediately to visualization (if radar is available)
+                    # Note: In Streamlit, we batch updates per round for efficiency, but the visualization
+                    # will process them with staggered timing for visual effect
+                except Exception as e:
+                    log.warning(f"Error collecting real-time update: {e}")
+            
+            # Run rounds one at a time to show live progress
+            for round_num in range(1, num_rounds + 1):
+                # Update progress
+                progress = (round_num - 1) / num_rounds
+                progress_bar.progress(progress)
+                status_text.markdown(
+                    f'Running Round {round_num}/{num_rounds}... | '
+                    f'Attempts: {completed_attempts}/{total_attempts} | '
+                    f'Exploits: {completed_exploits}',
+                    unsafe_allow_html=True
+                )
+                
+                # Run single round with real-time callback
+                round_result = run_async(st.session_state.arena._run_round(
+                    round_num=round_num,
+                    defenders=[defender],
+                    parallel=False,  # Sequential for better live updates
+                    on_evaluation_complete=send_realtime_update  # Real-time updates!
+                ))
+                
+                all_round_results.append(round_result)
+                st.session_state.arena.rounds.append(round_result)
+                st.session_state.arena.total_rounds += 1
+                
+                # Update counters
+                round_evals = round_result.evaluations
+                completed_rounds = round_num
+                completed_attempts += len(round_evals)
+                completed_exploits += sum(1 for e in round_evals if e.is_jailbroken)
+                
+                # Send all collected real-time updates to visualization immediately
+                # Updates are sent after each round completes, with staggered timing in visualization
+                if radar_template_path.exists() and st.session_state.realtime_updates:
+                    import streamlit.components.v1 as components
+                    # Get all new updates since last send
+                    new_updates = st.session_state.realtime_updates.copy()
+                    st.session_state.realtime_updates = []  # Clear after sending
+                    
+                    # Create updated HTML with all new updates
+                    with open(radar_template_path, 'r') as f:
+                        updated_html = f.read()
+                    
+                    # Embed all updates as JavaScript
+
+                    
+                    # Ensure all values are JSON-serializable
+
+                    
+                    serializable_updates = make_json_serializable(new_updates)
+
+                    
+                    stats_dict = {
+
+                    
+                        'type': 'stats_update',
+
+                    
+                        'stats': {
+
+                    
+                            'active': int(completed_attempts),
+
+                    
+                            'blocked': int(completed_attempts - completed_exploits),
+
+                    
+                            'exploited': int(completed_exploits),
+
+                    
+                            'round': int(completed_rounds),
+
+                    
+                            'totalRounds': int(num_rounds)
+
+                    
+                        }
+
+                    
+                    }
+
+                    
+                    serializable_stats = make_json_serializable(stats_dict)
+
+                    
+                    
+
+                    
+                    updates_script = f"""
+
+                    
+                    <script>
+
+                    
+                        (function() {{
+
+                    
+                            const updates = {json.dumps(serializable_updates)};
+                            const statsUpdate = {json.dumps(serializable_stats)};
+                            
+                            setTimeout(function() {{
+                                if (window.updateThreatRadar) {{
+                                    // Send each update individually for real-time effect with faster timing
+                                    updates.forEach((update, idx) => {{
+                                        setTimeout(() => {{
+                                            window.updateThreatRadar(update);
+                                        }}, idx * 30); // Faster stagger for more responsive feel
+                                    }});
+                                    // Send stats update after all evaluation updates
+                                    setTimeout(() => {{
+                                        window.updateThreatRadar(statsUpdate);
+                                    }}, updates.length * 30 + 50);
+                                }}
+                            }}, 50);
+                        }})();
+                    </script>
+                    """
+                    
+                    # Inject script into HTML
+                    updated_html = updated_html.replace('</body>', updates_script + '</body>')
+                    
+                    # Update radar container
+                    with radar_container.container():
+                        components.html(updated_html, height=600)
+                
+                # Update progress bar
+                progress_bar.progress(round_num / num_rounds)
+                
+                # Update status
+                status_text.markdown(
+                    f'Round {round_num}/{num_rounds} Complete | '
+                    f'Attempts: {completed_attempts}/{total_attempts} | '
+                    f'Exploits: {completed_exploits}',
+                    unsafe_allow_html=True
+                )
+                
+                # Update live metrics (collapsible)
+                with live_stats_container.container():
+                    with st.expander("Live Evaluation Metrics", expanded=False):
+                        col1, col2, col3, col4 = st.columns(4)
+                        with col1:
+                            st.metric("Rounds Completed", f"{completed_rounds}/{num_rounds}")
+                        with col2:
+                            st.metric("Total Attempts", f"{completed_attempts}/{total_attempts}")
+                        with col3:
+                            exploit_rate_pct = (completed_exploits / completed_attempts * 100) if completed_attempts > 0 else 0
+                            st.metric("Exploits", f"{completed_exploits}/{completed_attempts}", delta=f"{exploit_rate_pct:.1f}%")
+                        with col4:
+                            elapsed = time.time() - st.session_state.start_time if st.session_state.start_time else 0
+                            avg_time = elapsed / completed_rounds if completed_rounds > 0 else 0
+                            st.metric("Elapsed Time", f"{elapsed:.1f}s", delta=f"~{avg_time:.1f}s/round")
+                
+                # Display live round results
+                round_logs = []
+                for eval_result in round_evals:
+                    if hasattr(eval_result, 'is_jailbroken'):
+                        status = "JAILBROKEN" if eval_result.is_jailbroken else "BLOCKED"
+                        strategy = eval_result.attack_strategy.value if hasattr(eval_result.attack_strategy, 'value') else str(eval_result.attack_strategy)
+                        severity = eval_result.severity.value if hasattr(eval_result.severity, 'value') else eval_result.severity
+                        prompt = str(eval_result.prompt)[:80] if eval_result.prompt else ''
+                    else:
+                        status = "JAILBROKEN" if eval_result.get('is_jailbroken', False) else "BLOCKED"
+                        attack_strat = eval_result.get('attack_strategy', {})
+                        strategy = attack_strat.get('value', 'unknown') if isinstance(attack_strat, dict) else str(attack_strat)
+                        sev = eval_result.get('severity', {})
+                        severity = sev.get('value', 0) if isinstance(sev, dict) else sev
+                        prompt = str(eval_result.get('prompt', ''))[:80]
+                    
+                    round_logs.append({
+                        "round": f"Round {round_num}",
+                        "status": status,
+                        "strategy": strategy,
+                        "severity": severity,
+                        "prompt": prompt
+                    })
+                
+                # Update live threat radar visualization
+                if radar_template_path.exists():
+                    import streamlit.components.v1 as components
+                    # Collect all updates for this round
+                    radar_updates = []
+                    for eval_result in round_evals:
+                        radar_update = {
+                            'type': 'evaluation_update',
+                            'id': str(eval_result.id) if hasattr(eval_result, 'id') else f"eval_{round_num}_{len(radar_updates)}",
+                            'strategy': str(eval_result.attack_strategy.value) if hasattr(eval_result.attack_strategy, 'value') else str(eval_result.attack_strategy),
+                            'prompt': str(eval_result.prompt)[:50] if eval_result.prompt else '',
+                            'isJailbroken': eval_result.is_jailbroken if hasattr(eval_result, 'is_jailbroken') else eval_result.get('is_jailbroken', False),
+                            'severity': eval_result.severity.value if hasattr(eval_result.severity, 'value') else eval_result.severity
+                        }
+                        radar_updates.append(radar_update)
+                    
+                    # Create updated HTML with embedded data
+                    with open(radar_template_path, 'r') as f:
+                        updated_html = f.read()
+                    
+                    # Embed updates as JavaScript
+                    # Ensure all values are JSON-serializable
+                    serializable_radar_updates = make_json_serializable(radar_updates)
+                    round_update_dict = {'type': 'round_complete', 'round': int(round_num), 'totalRounds': int(num_rounds)}
+                    serializable_round_update = make_json_serializable(round_update_dict)
+                    stats_dict_2 = {
+                        'type': 'stats_update',
+                        'stats': {
+                            'active': int(len(radar_updates)),
+                            'blocked': int(completed_attempts - completed_exploits),
+                            'exploited': int(completed_exploits),
+                            'round': int(completed_rounds),
+                            'totalRounds': int(num_rounds)
+                        }
+                    }
+                    serializable_stats_2 = make_json_serializable(stats_dict_2)
+                    
+                    updates_script = f"""
+                    <script>
+                        (function() {{
+                            const updates = {json.dumps(serializable_radar_updates)};
+                            const roundUpdate = {json.dumps(serializable_round_update)};
+                            const statsUpdate = {json.dumps(serializable_stats_2)};
+                            
+                            setTimeout(function() {{
+                                if (window.updateThreatRadar) {{
+                                    // Send updates with staggered timing for visual effect
+                                    updates.forEach((update, idx) => {{
+                                        setTimeout(() => {{
+                                            window.updateThreatRadar(update);
+                                        }}, idx * 30);
+                                    }});
+                                    setTimeout(() => {{
+                                        window.updateThreatRadar(roundUpdate);
+                                        window.updateThreatRadar(statsUpdate);
+                                    }}, updates.length * 30 + 50);
+                                }}
+                            }}, 50);
+                        }})();
+                    </script>
+                    """
+                    
+                    # Inject script into HTML
+                    updated_html = updated_html.replace('</body>', updates_script + '</body>')
+                    
+                    # Update radar container
+                    with radar_container.container():
+                        components.html(updated_html, height=600)
+                
+                # Display live logs for this round (collapsible)
+                with live_logs_container.container():
+                    with st.expander(f"Live Round-by-Round Results (Round {round_num}/{num_rounds})", expanded=False):
+                        st.markdown(f"**Round {round_num}/{num_rounds}** - {len(round_evals)} attempts, {sum(1 for e in round_evals if e.is_jailbroken)} exploits")
+                        
+                        # Show last 20 log entries across all rounds
+                        all_logs = st.session_state.eval_progress['round_logs'] + round_logs
+                        st.session_state.eval_progress['round_logs'] = all_logs[-50:]  # Keep last 50
+                        
+                        for log_entry in all_logs[-20:]:  # Show last 20
+                            if log_entry['status'] == "JAILBROKEN":
+                                st.markdown(f"""
+                                <div class="success-log">
+                                    <strong>{log_entry['round']}: {log_entry['status']}</strong><br>
+                                    Strategy: {log_entry['strategy']} | Severity: {log_entry['severity']}/5<br>
+                                    <small>Prompt: {log_entry['prompt']}...</small>
+                                </div>
+                                """, unsafe_allow_html=True)
+                            else:
+                                st.markdown(f"""
+                                <div class="fail-log">
+                                    <strong>{log_entry['round']}: {log_entry['status']}</strong><br>
+                                    Strategy: {log_entry['strategy']}<br>
+                                    <small>Prompt: {log_entry['prompt']}...</small>
+                                </div>
+                                """, unsafe_allow_html=True)
+            
+            # Compile final results
+            results = st.session_state.arena._compile_results([defender])
+            all_results = [results]
             
             progress_bar.progress(1.0)
-            status_text.text("✅ Evaluation Complete")
+            status_text.markdown('Evaluation Complete', unsafe_allow_html=True)
             
             # Track end time and calculate duration
             st.session_state.end_time = time.time()
@@ -1084,59 +1911,31 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 st.metric("Total Duration", f"{duration:.1f}s")
             
         except Exception as e:
-            st.error(f"❌ Evaluation failed: {e}")
+            st.markdown(f'<div style="padding: 0.75rem; background: rgba(239, 68, 68, 0.1); border-left: 3px solid rgba(239, 68, 68, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #fca5a5;"><i class="fas fa-times-circle" style="margin-right: 0.5rem; color: #ef4444;"></i> Evaluation failed: {e}</div>', unsafe_allow_html=True)
             import traceback
             with st.expander("Error Details", expanded=False):
                 st.code(traceback.format_exc())
             st.session_state.battle_running = False
             st.stop()
             
-        # Display evaluation summary
-        if results:
-            with battle_container:
-                st.markdown("### Evaluation Summary")
-                
-                # Get statistics
-                stats = results.get('statistics', {})
-                total_exploits = stats.get('total_exploits', 0)
-                total_evaluations = stats.get('total_evaluations', total_attempts)
-                exploit_rate = stats.get('exploit_rate', 0)
-                
-                col1, col2, col3, col4 = st.columns(4)
-                
-                with col1:
-                    st.metric("Total Rounds", num_rounds, 
-                             delta=f"{num_attackers} attackers/round" if num_attackers else None,
-                             delta_color="off")
-                
-                with col2:
-                    st.metric("Total Attempts", total_evaluations,
-                             delta=f"{total_attempts} expected" if total_evaluations != total_attempts else None,
-                             delta_color="off")
-                
-                with col3:
-                    st.metric("Exploits Found", f"{total_exploits}/{total_evaluations}",
-                             delta=f"{exploit_rate:.1%} rate",
-                             delta_color="inverse")
-                
-                with col4:
-                    if results.get('defenders'):
-                        jvi = results['defenders'][0].get('jvi', {}).get('jvi_score', 0)
-                        st.metric("JVI Score", f"{jvi:.2f}",
-                                 delta=f"{jvi-50:.1f} from baseline" if jvi else None,
-                                 delta_color="off")
-            
             # Add to logs with proper round numbers
-            if results.get('evaluation_history'):
+            # Clear old logs first to avoid confusion
+            st.session_state.logs = []
+            
+        if results and results.get('evaluation_history'):
                 evaluation_history = results['evaluation_history']
                 
+                # Get num_attackers from the arena (should be available)
+                num_attackers_in_arena = len(st.session_state.arena.attackers) if st.session_state.arena and hasattr(st.session_state.arena, 'attackers') else num_attackers
+                if num_attackers_in_arena <= 0:
+                    num_attackers_in_arena = num_attackers  # Fallback to config value
+                
                 # Calculate round number for each evaluation (assuming attackers per round)
-                for idx, eval_result in enumerate(evaluation_history[-20:]):  # Last 20 evaluations
+                for idx, eval_result in enumerate(evaluation_history):
                     # Calculate which round this evaluation belongs to
                     # Each round has num_attackers evaluations
-                    global_idx = len(evaluation_history) - 20 + idx if len(evaluation_history) > 20 else idx
-                    round_num = (global_idx // num_attackers) + 1 if num_attackers > 0 else 1
-                    attempt_in_round = (global_idx % num_attackers) + 1 if num_attackers > 0 else 1
+                    round_num = (idx // num_attackers_in_arena) + 1 if num_attackers_in_arena > 0 else 1
+                    attempt_in_round = (idx % num_attackers_in_arena) + 1 if num_attackers_in_arena > 0 else 1
                     
                     # Handle both Pydantic models and dicts
                     if hasattr(eval_result, 'is_jailbroken'):
@@ -1157,7 +1956,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                         response = str(eval_result.get('response', ''))[:100]
                     
                     log_entry = {
-                        "round": f"Round {round_num} (Attempt {attempt_in_round})",
+                        "round": f"Round {round_num}, Attempt {attempt_in_round}",
                         "status": status,
                         "strategy": strategy,
                         "severity": severity,
@@ -1173,7 +1972,35 @@ python3 -m vllm.entrypoints.openai.api_server \\
         st.markdown('</div>', unsafe_allow_html=True)
         
         # Final statistics with enhanced visualizations
-        st.markdown("## 📊 Final Results")
+        st.markdown("---")
+        st.markdown("## Final Evaluation Results")
+        
+        if results:
+            # Quick summary metrics
+            stats = results.get('statistics', {})
+            total_exploits = stats.get('total_exploits', 0)
+            total_evaluations = stats.get('total_evaluations', total_attempts)
+            exploit_rate = stats.get('exploit_rate', 0)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1:
+                st.metric("Total Rounds", num_rounds, 
+                         delta=f"{num_attackers} attackers/round" if num_attackers else None,
+                         delta_color="off")
+            with col2:
+                st.metric("Total Attempts", total_evaluations,
+                         delta=f"{total_attempts} expected" if total_evaluations != total_attempts else None,
+                         delta_color="off")
+            with col3:
+                st.metric("Exploits Found", f"{total_exploits}/{total_evaluations}",
+                         delta=f"{exploit_rate:.1%} rate",
+                         delta_color="inverse")
+            with col4:
+                if results.get('defenders'):
+                    jvi = results['defenders'][0].get('jvi', {}).get('jvi_score', 0)
+                    st.metric("JVI Score", f"{jvi:.2f}",
+                             delta=f"{jvi-50:.1f} from baseline" if jvi else None,
+                             delta_color="off")
         
         if results and results.get('defenders'):
             # JVI Gauge and Key Metrics
@@ -1190,6 +2017,95 @@ python3 -m vllm.entrypoints.openai.api_server \\
                     jvi_data = defender_result.jvi if hasattr(defender_result, 'jvi') else {}
                 
                 st.plotly_chart(create_jvi_gauge(jvi), use_container_width=True, key="jvi_gauge_main")
+                
+                # JVI Live Monitor - Real-time vulnerability tracking
+                st.markdown("---")
+                st.markdown("### JVI Live Monitor")
+                st.markdown("*Real-time vulnerability tracking for regulatory assessment*")
+                
+                # Initialize JVI history in session state if not exists
+                if 'jvi_history' not in st.session_state:
+                    st.session_state.jvi_history = []
+                
+                # Add current JVI to history with timestamp
+                current_time = datetime.now()
+                st.session_state.jvi_history.append({
+                    'timestamp': current_time,
+                    'jvi': jvi,
+                    'exploit_rate': exploit_rate if 'exploit_rate' in locals() else 0,
+                    'mean_severity': mean_severity if 'mean_severity' in locals() else 0
+                })
+                
+                # Keep only last 50 points for performance
+                if len(st.session_state.jvi_history) > 50:
+                    st.session_state.jvi_history = st.session_state.jvi_history[-50:]
+                
+                # Create JVI trend chart
+                if len(st.session_state.jvi_history) > 1:
+                    jvi_df = pd.DataFrame(st.session_state.jvi_history)
+                    jvi_df['time'] = pd.to_datetime(jvi_df['timestamp'])
+                    
+                    fig_jvi_trend = go.Figure()
+                    fig_jvi_trend.add_trace(go.Scatter(
+                        x=jvi_df['time'],
+                        y=jvi_df['jvi'],
+                        mode='lines+markers',
+                        name='JVI Score',
+                        line=dict(color='#06b6d4', width=3),
+                        marker=dict(size=8, color='#06b6d4'),
+                        fill='tonexty',
+                        fillcolor='rgba(6, 182, 212, 0.1)'
+                    ))
+                    
+                    # Add threshold lines
+                    fig_jvi_trend.add_hline(y=20, line_dash="dash", line_color="green", 
+                                          annotation_text="Low Risk", annotation_position="right")
+                    fig_jvi_trend.add_hline(y=50, line_dash="dash", line_color="yellow", 
+                                          annotation_text="Moderate Risk", annotation_position="right")
+                    fig_jvi_trend.add_hline(y=80, line_dash="dash", line_color="red", 
+                                          annotation_text="High Risk", annotation_position="right")
+                    
+                    fig_jvi_trend.update_layout(
+                        title="JVI Live Monitor - Vulnerability Index Over Time",
+                        xaxis_title="Time",
+                        yaxis_title="JVI Score",
+                        height=300,
+                        paper_bgcolor='rgba(26, 26, 38, 0.5)',
+                        plot_bgcolor='rgba(26, 26, 38, 0.3)',
+                        font={'color': '#e0e7ff'},
+                        hovermode='x unified'
+                    )
+                    
+                    st.plotly_chart(fig_jvi_trend, use_container_width=True, key="jvi_live_monitor")
+                    
+                    # Show trend indicator
+                    if len(jvi_df) >= 2:
+                        latest_jvi = jvi_df['jvi'].iloc[-1]
+                        previous_jvi = jvi_df['jvi'].iloc[-2]
+                        delta = latest_jvi - previous_jvi
+                        
+                        if delta < 0:
+                            trend_icon = '<i class="fas fa-arrow-down" style="margin-right: 0.5rem;"></i>'
+                            trend_color = "green"
+                            trend_text = "Improving"
+                        elif delta > 0:
+                            trend_icon = '<i class="fas fa-arrow-up" style="margin-right: 0.5rem;"></i>'
+                            trend_color = "red"
+                            trend_text = "Worsening"
+                        else:
+                            trend_icon = '<i class="fas fa-arrow-right" style="margin-right: 0.5rem;"></i>'
+                            trend_color = "gray"
+                            trend_text = "Stable"
+                        
+                        st.markdown(f"""
+                        <div style="padding: 1rem; background: rgba(15, 23, 42, 0.7); border-radius: 12px; border-left: 4px solid {trend_color};">
+                            <strong>{trend_icon} Trend: {trend_text}</strong><br>
+                            <small>Change: {delta:+.2f} points</small><br>
+                            <small>Current: {latest_jvi:.2f} | Previous: {previous_jvi:.2f}</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.info("JVI history will appear here as evaluations progress")
             
             with col2:
                 st.markdown("### Key Metrics")
@@ -1214,7 +2130,13 @@ python3 -m vllm.entrypoints.openai.api_server \\
             
             # Enhanced visualization tabs
             st.markdown("---")
-            tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Trends", "🎯 Strategies", "⚠️ Severity", "🏆 Leaderboard", "🌐 3D Vector Space"])
+            tab1, tab2, tab3, tab4, tab5 = st.tabs([
+                "Trends",
+                "Strategies",
+                "Severity",
+                "Leaderboard",
+                "3D Vector Space"
+            ])
             
             evaluation_history = results.get('evaluation_history', [])
             
@@ -1291,7 +2213,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                     st.info("No leaderboard data available")
             
             with tab5:
-                st.markdown("### 🌐 3D Vector Space Visualization")
+                st.markdown('<h3><i class="fas fa-globe" style="margin-right: 0.5rem;"></i> 3D Vector Space Visualization</h3>', unsafe_allow_html=True)
                 st.markdown("**Explore evaluation results in semantic vector space**")
                 st.markdown("Points are colored by attack strategy. Similar responses cluster together.")
                 
@@ -1358,7 +2280,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                     with open(html_file, 'w') as f:
                                         f.write(html_content)
                                     
-                                    st.success(f"✅ Generated {len(data_points)} data points for 3D visualization")
+                                    st.markdown(f'<div style="padding: 0.75rem; background: rgba(34, 197, 94, 0.1); border-left: 3px solid rgba(34, 197, 94, 0.8); border-radius: 6px; margin: 0.5rem 0; color: #86efac;"><i class="fas fa-check-circle" style="margin-right: 0.5rem; color: #22c55e;"></i> Generated {len(data_points)} data points for 3D visualization</div>', unsafe_allow_html=True)
                                     
                                     # Display the 3D visualization using Streamlit's HTML component
                                     try:
@@ -1369,27 +2291,34 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                         st.info("Use the download button below to view the HTML file in your browser.")
                                     
                                     # Display instructions
-                                    with st.expander("📖 How to Use", expanded=False):
+                                    with st.expander("How to Use 3D Threat Radar", expanded=False):
                                         st.markdown("""
-                                        **3D Vector Space Controls:**
-                                        - **Orbit:** Left-click and drag to rotate
-                                        - **Zoom:** Mouse wheel to zoom in/out
-                                        - **Pan:** Shift + left-click and drag to pan
-                                        - **Hover:** Move mouse over points to see details
-                                        - **Color Modes:** Switch between Strategy, Status, and Severity views
+                                        <div style="padding: 1rem; background: rgba(15, 23, 42, 0.5); border-radius: 12px; border-left: 4px solid #06b6d4;">
+                                        <h4 style="color: #06b6d4; margin-top: 0;">3D Vector Space Controls</h4>
+                                        <ul style="color: #e0e7ff; line-height: 1.8;">
+                                        <li><strong>Orbit:</strong> Left-click and drag to rotate the view</li>
+                                        <li><strong>Zoom:</strong> Mouse wheel to zoom in/out</li>
+                                        <li><strong>Pan:</strong> Shift + left-click and drag to pan</li>
+                                        <li><strong>Hover:</strong> Move mouse over points to see detailed information</li>
+                                        <li><strong>Color Modes:</strong> Switch between Strategy, Status, and Severity views using the dropdown</li>
+                                        </ul>
                                         
-                                        **Legend:**
-                                        - Each attack strategy has a unique color
-                                        - Points cluster together based on semantic similarity
-                                        - Jailbroken points are red, blocked points are green (in Status mode)
-                                        """)
+                                        <h4 style="color: #06b6d4; margin-top: 1.5rem;">Visualization Legend</h4>
+                                        <ul style="color: #e0e7ff; line-height: 1.8;">
+                                        <li>Each attack strategy has a unique color in Strategy mode</li>
+                                        <li>Points cluster together based on semantic similarity of responses</li>
+                                        <li>In Status mode: Jailbroken points are red, blocked points are green</li>
+                                        <li>In Severity mode: Color intensity indicates threat severity level</li>
+                                        </ul>
+                                        </div>
+                                        """, unsafe_allow_html=True)
                                     
                                     # Download buttons
                                     col_d1, col_d2 = st.columns(2)
                                     with col_d1:
                                         with open(html_file, 'rb') as f:
                                             st.download_button(
-                                                label="📥 Download 3D Viewer (HTML)",
+                                                label="Download 3D Viewer (HTML)",
                                                 data=f.read(),
                                                 file_name=html_file.name,
                                                 mime="text/html",
@@ -1398,7 +2327,7 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                     with col_d2:
                                         with open(output_file, 'r') as f:
                                             st.download_button(
-                                                label="📥 Download 3D Data (JSON)",
+                                                label="Download 3D Data (JSON)",
                                                 data=f.read(),
                                                 file_name=output_file.name,
                                                 mime="application/json",
@@ -1406,19 +2335,42 @@ python3 -m vllm.entrypoints.openai.api_server \\
                                             )
                                     
                                     # Show preview statistics
-                                    st.markdown("#### 📊 Visualization Statistics")
+                                    st.markdown("---")
+                                    st.markdown("### Threat Radar Statistics")
+                                    
+                                    jailbroken_count = sum(1 for p in data_points if p.get('is_jailbroken', False))
+                                    blocked_count = len(data_points) - jailbroken_count
+                                    strategies = len(set(p.get('strategy_index', 0) for p in data_points))
+                                    exploit_rate = (jailbroken_count / len(data_points) * 100) if data_points else 0
+                                    
                                     col1, col2, col3, col4 = st.columns(4)
                                     with col1:
-                                        st.metric("Total Points", len(data_points))
+                                        st.metric(
+                                            "Total Evaluations",
+                                            len(data_points),
+                                            help="Total number of evaluation points in the Threat Radar"
+                                        )
                                     with col2:
-                                        jailbroken_count = sum(1 for p in data_points if p.get('is_jailbroken', False))
-                                        st.metric("Jailbroken", jailbroken_count)
+                                        st.metric(
+                                            "Successful Exploits",
+                                            jailbroken_count,
+                                            delta=f"{exploit_rate:.1f}% exploit rate",
+                                            delta_color="inverse",
+                                            help="Number of successful jailbreak attempts"
+                                        )
                                     with col3:
-                                        blocked_count = len(data_points) - jailbroken_count
-                                        st.metric("Blocked", blocked_count)
+                                        st.metric(
+                                            "Blocked Attempts",
+                                            blocked_count,
+                                            delta=f"{(100-exploit_rate):.1f}% block rate",
+                                            help="Number of blocked attack attempts"
+                                        )
                                     with col4:
-                                        strategies = len(set(p.get('strategy_index', 0) for p in data_points))
-                                        st.metric("Strategies", strategies)
+                                        st.metric(
+                                            "Attack Strategies",
+                                            strategies,
+                                            help="Number of unique attack strategies tested"
+                                        )
                                     
                                 else:
                                     st.error(f"HTML template not found at {template_path}")
@@ -1433,53 +2385,54 @@ python3 -m vllm.entrypoints.openai.api_server \\
                 else:
                     st.info("No evaluation history available for 3D visualization. Run an evaluation first.")
         
-        # Battle logs with sample responses
+        # Battle logs with sample responses (collapsible)
         with logs_container:
-            st.markdown("### Evaluation Log")
-            
-            # Add expander to show sample responses for debugging
-            if evaluation_history:
-                with st.expander("🔍 View Sample Responses (for debugging)", expanded=False):
-                    sample_count = min(5, len(evaluation_history))
-                    for i, eval_result in enumerate(evaluation_history[:sample_count]):
-                        # Handle both dict and object access
-                        if isinstance(eval_result, dict):
-                            prompt = eval_result.get('prompt', '')[:150]
-                            response = eval_result.get('response', '')[:300]
-                            strategy = eval_result.get('attack_strategy', {})
-                            strategy_name = strategy.get('value', 'unknown') if isinstance(strategy, dict) else str(strategy)
-                            is_jailbroken = eval_result.get('is_jailbroken', False)
-                        else:
-                            prompt = str(eval_result.prompt)[:150] if eval_result.prompt else ''
-                            response = str(eval_result.response)[:300] if eval_result.response else ''
-                            strategy_name = str(eval_result.attack_strategy.value) if hasattr(eval_result.attack_strategy, 'value') else str(eval_result.attack_strategy)
-                            is_jailbroken = eval_result.is_jailbroken
-                        
-                        st.markdown(f"**Sample {i+1} - Strategy: {strategy_name}**")
-                        st.markdown(f"**Prompt:** {prompt}...")
-                        st.markdown(f"**Response:** {response}...")
-                        st.markdown(f"**Jailbroken:** {'✅ Yes' if is_jailbroken else '❌ No'}")
-                        st.markdown("---")
-            
-            for log_entry in st.session_state.logs[-20:]:
-                if log_entry['status'] == "JAILBROKEN":
-                    st.markdown(f"""
-                    <div class="success-log">
-                        <strong>Round {log_entry['round']}: {log_entry['status']}</strong><br>
-                        Strategy: {log_entry['strategy']} | Severity: {log_entry['severity']}/5<br>
-                        <small>Prompt: {log_entry['prompt']}...</small><br>
-                        <small>Response: {log_entry.get('response', '')[:100]}...</small>
-                    </div>
-                    """, unsafe_allow_html=True)
-                else:
-                    st.markdown(f"""
-                    <div class="fail-log">
-                        <strong>Round {log_entry['round']}: {log_entry['status']}</strong><br>
-                        Strategy: {log_entry['strategy']}<br>
-                        <small>Prompt: {log_entry['prompt']}...</small><br>
-                        <small>Response: {log_entry.get('response', '')[:100]}...</small>
-                    </div>
-                    """, unsafe_allow_html=True)
+            with st.expander("Evaluation Log", expanded=False):
+                # Add expander to show sample responses for debugging
+                if evaluation_history:
+                    with st.expander("View Sample Responses (for debugging)", expanded=False):
+                        sample_count = min(5, len(evaluation_history))
+                        for i, eval_result in enumerate(evaluation_history[:sample_count]):
+                            # Handle both dict and object access
+                            if isinstance(eval_result, dict):
+                                prompt = eval_result.get('prompt', '')[:150]
+                                response = eval_result.get('response', '')[:300]
+                                strategy = eval_result.get('attack_strategy', {})
+                                strategy_name = strategy.get('value', 'unknown') if isinstance(strategy, dict) else str(strategy)
+                                is_jailbroken = eval_result.get('is_jailbroken', False)
+                            else:
+                                prompt = str(eval_result.prompt)[:150] if eval_result.prompt else ''
+                                response = str(eval_result.response)[:300] if eval_result.response else ''
+                                strategy_name = str(eval_result.attack_strategy.value) if hasattr(eval_result.attack_strategy, 'value') else str(eval_result.attack_strategy)
+                                is_jailbroken = eval_result.is_jailbroken
+                            
+                            st.markdown(f"**Sample {i+1} - Strategy: {strategy_name}**")
+                            st.markdown(f"**Prompt:** {prompt}...")
+                            st.markdown(f"**Response:** {response}...")
+                            jailbroken_icon = '<i class="fas fa-check-circle icon-success" style="margin-right: 0.5rem;"></i> Yes' if is_jailbroken else '<i class="fas fa-times-circle icon-error" style="margin-right: 0.5rem;"></i> No'
+                            st.markdown(f'**Jailbroken:** {jailbroken_icon}', unsafe_allow_html=True)
+                            st.markdown("---")
+                
+                for log_entry in st.session_state.logs[-20:]:
+                    round_label = log_entry.get('round', 'Unknown')
+                    if log_entry['status'] == "JAILBROKEN":
+                        st.markdown(f"""
+                        <div class="success-log">
+                            <strong>{round_label}: {log_entry['status']}</strong><br>
+                            Strategy: {log_entry['strategy']} | Severity: {log_entry['severity']}/5<br>
+                            <small>Prompt: {log_entry['prompt']}...</small><br>
+                            <small>Response: {log_entry.get('response', '')[:100]}...</small>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"""
+                        <div class="fail-log">
+                            <strong>{round_label}: {log_entry['status']}</strong><br>
+                            Strategy: {log_entry['strategy']}<br>
+                            <small>Prompt: {log_entry['prompt']}...</small><br>
+                            <small>Response: {log_entry.get('response', '')[:100]}...</small>
+                        </div>
+                        """, unsafe_allow_html=True)
         
         # Export results
         st.download_button(
@@ -1493,9 +2446,9 @@ python3 -m vllm.entrypoints.openai.api_server \\
         # Professional welcome screen
         st.markdown("""
         <div style="text-align: center; padding: 3rem;">
-            <h2>Welcome to the Jailbreak Arena</h2>
+            <h2>Welcome to Jailbreak Genome Scanner</h2>
             <p style="font-size: 1.1rem; color: #666666; margin-top: 1rem;">
-                Real-time AI safety evaluation platform<br>
+                Active Defense Infrastructure - Automated Red-Teaming & Threat Radar System<br>
                 Configure your settings in the sidebar and click START EVALUATION to begin
             </p>
         </div>

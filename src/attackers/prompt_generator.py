@@ -6,6 +6,8 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 from src.models.jailbreak import AttackStrategy, AttackerProfile
 from src.attackers.prompt_database import PromptDatabase, map_strategy_to_attack_strategy
+from src.attackers.bio_agent import BioRadarAgent
+from src.attackers.cyber_agent import CyberSentinelAgent
 from src.utils.logger import log
 
 
@@ -35,6 +37,10 @@ class PromptGenerator:
             else:
                 log.warning(f"Prompt database not found at {db_path}, using fallback generation")
         
+        # Initialize specialized agents
+        self.bio_agent = BioRadarAgent()
+        self.cyber_agent = CyberSentinelAgent()
+        
         self.strategies = {
             AttackStrategy.ROLEPLAY: self._generate_roleplay,
             AttackStrategy.EMOTIONAL_COERCION: self._generate_emotional_coercion,
@@ -46,6 +52,9 @@ class PromptGenerator:
             AttackStrategy.INDIRECT_REQUEST: self._generate_indirect_request,
             AttackStrategy.POLICY_PROBING: self._generate_policy_probing,
             AttackStrategy.HONEYPOT: self._generate_honeypot,
+            # Specialized defense-focused agents
+            AttackStrategy.BIO_HAZARD: self._generate_bio_hazard,
+            AttackStrategy.CYBER_EXPLOIT: self._generate_cyber_exploit,
         }
     
     def generate_attackers(
@@ -66,6 +75,15 @@ class PromptGenerator:
             List of AttackerProfile objects
         """
         if strategies is None:
+            # Always include specialized defense-focused agents for hackathon
+            # These MUST be included regardless of num_strategies
+            specialized_strategies = [AttackStrategy.BIO_HAZARD, AttackStrategy.CYBER_EXPLOIT]
+            
+            # Ensure num_strategies is at least 2 to accommodate specialized agents
+            if num_strategies < 2:
+                num_strategies = 2
+                log.warning(f"num_strategies increased to 2 to accommodate BIO_HAZARD and CYBER_EXPLOIT agents")
+            
             # Use strategies available in database if possible
             if self.prompt_db:
                 db_strategies = self.prompt_db.get_statistics()["strategies"]
@@ -75,18 +93,44 @@ class PromptGenerator:
                     "Emotional Manipulator": AttackStrategy.EMOTIONAL_COERCION,
                     "Fictional Ambiguity Framer": AttackStrategy.FICTIONAL_FRAMING,
                 }
-                strategies = [
+                db_based_strategies = [
                     strategy_mapping.get(s, AttackStrategy.ROLEPLAY)
-                    for s in db_strategies[:num_strategies]
+                    for s in db_strategies
                     if s in strategy_mapping
                 ]
-                # Fill remaining with defaults if needed
-                if len(strategies) < num_strategies:
-                    default_strategies = list(AttackStrategy)[:num_strategies]
-                    strategies.extend([s for s in default_strategies if s not in strategies])
-                    strategies = strategies[:num_strategies]
+                
+                # Combine: specialized agents first (ALWAYS included), then database strategies
+                strategies = specialized_strategies.copy()
+                remaining_slots = num_strategies - len(strategies)
+                
+                # Add database strategies (excluding ones already added)
+                for db_strategy in db_based_strategies:
+                    if db_strategy not in strategies and remaining_slots > 0:
+                        strategies.append(db_strategy)
+                        remaining_slots -= 1
+                
+                # Fill remaining with other available strategies if needed
+                if remaining_slots > 0:
+                    all_strategies = list(AttackStrategy)
+                    for strategy in all_strategies:
+                        if strategy not in strategies and remaining_slots > 0:
+                            strategies.append(strategy)
+                            remaining_slots -= 1
+                
+                # Ensure specialized agents are still first, then limit to num_strategies
+                # Reorder to ensure specialized agents are at the front
+                final_strategies = specialized_strategies.copy()
+                for s in strategies:
+                    if s not in final_strategies:
+                        final_strategies.append(s)
+                strategies = final_strategies[:num_strategies]
             else:
-                strategies = list(AttackStrategy)[:num_strategies]
+                # No database: start with specialized (ALWAYS), then add others
+                strategies = specialized_strategies.copy()
+                remaining = num_strategies - len(strategies)
+                if remaining > 0:
+                    other_strategies = [s for s in list(AttackStrategy) if s not in specialized_strategies]
+                    strategies.extend(other_strategies[:remaining])
         
         attackers = []
         for strategy in strategies[:num_strategies]:
@@ -314,4 +358,24 @@ class PromptGenerator:
         
         log.info(f"Generated {len(prompts)} prompts across {len(strategies)} strategies")
         return prompts
+    
+    def _generate_bio_hazard(self, target_domain: Optional[str] = None, **kwargs) -> str:
+        """Generate bio-hazard prompt using Bio-Radar agent."""
+        obfuscation_level = kwargs.get('obfuscation_level', random.choice(['low', 'medium', 'high']))
+        use_research_frame = kwargs.get('use_research_frame', True)
+        return self.bio_agent.generate_prompt(
+            obfuscation_level=obfuscation_level,
+            use_research_frame=use_research_frame
+        )
+    
+    def _generate_cyber_exploit(self, target_domain: Optional[str] = None, **kwargs) -> str:
+        """Generate cyber exploit prompt using Cyber-Sentinel agent."""
+        language = kwargs.get('language', random.choice(['cpp', 'rust']))
+        use_research_frame = kwargs.get('use_research_frame', True)
+        request_type = kwargs.get('request_type', random.choice(['exploit', 'review']))
+        return self.cyber_agent.generate_prompt(
+            language=language,
+            use_research_frame=use_research_frame,
+            request_type=request_type
+        )
 
