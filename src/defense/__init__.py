@@ -7,6 +7,7 @@ from src.defense.response_guard import ResponseGuard
 from src.defense.adaptive_engine import AdaptiveDefenseEngine, DefenseRule
 from src.defense.vulnerability_analyzer import VulnerabilityAnalyzer, Vulnerability
 from src.defense.patch_generator import DefensePatchGenerator, DefensePatch
+from src.defense.evolution_engine import DefenseEvolutionEngine, DefenseGenome
 
 __all__ = [
     'ThreatPatternRecognizer',
@@ -18,6 +19,8 @@ __all__ = [
     'VulnerabilityAnalyzer',
     'Vulnerability',
     'DefensePatchGenerator',
-    'DefensePatch'
+    'DefensePatch',
+    'DefenseEvolutionEngine',
+    'DefenseGenome'
 ]
 
