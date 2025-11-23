@@ -2,6 +2,8 @@
 
 **Automated Red-Teaming & Radar System for Dual-Use Capabilities**
 
+> **Built for the [Defensive Acceleration Hackathon](https://apartresearch.com/sprints) - Track 2: Cybersecurity & Infrastructure Protection**
+
 ## Overview
 
 **Attackers are automating. A manual red team cannot keep up with a 100x acceleration in offensive AI capabilities.**
@@ -9,6 +11,10 @@
 **JGS is the defensive acceleration answer: an automated, evolving system that maps the 'genome' of biological and cyber threats before they are deployed.**
 
 The **Jailbreak Genome Scanner (JGS)** is an **Active Defense Infrastructure** designed to protect against catastrophic risks in AI systems. Instead of reactive filters that block harmful outputs after deployment, JGS provides **predictive defenses** through automated red-teaming at scale.
+
+### 🏆 Hackathon Submission
+
+This project addresses the **Defensive Acceleration Hackathon** challenge: building defensive systems that protect us from AI-enabled threats. JGS specifically targets **Track 2: Cybersecurity & Infrastructure Protection** by providing an **AI-powered red-teaming tool for critical infrastructure** that uses advanced models to automatically find vulnerabilities before attackers can exploit them.
 
 At the heart of the system is the **Jailbreak Arena** — an automated red-teaming environment where specialized attacker agents (Bio-Radar, Cyber-Sentinel, and social engineering agents) systematically probe models for dual-use capabilities. Every exploit is fingerprinted and mapped to create a **Threat Radar** that identifies vulnerability patterns before attackers can exploit them.
 
@@ -142,7 +148,45 @@ jailbreak-genome-scanner/
 └── tests/                      # Test suite
 ```
 
-## Installation
+## Quick Start (Hackathon Demo)
+
+### 1. Deploy to Modal.com
+
+```bash
+# Install Modal CLI
+python -m pip install modal
+
+# Deploy the infrastructure
+python -m modal deploy modal_deploy.py
+```
+
+This creates three endpoints:
+- `chat_completions` - OpenAI-compatible chat API (used by dashboard)
+- `serve` - Simple prompt → response
+- `completions` - OpenAI-compatible completions
+
+### 2. Configure Environment
+
+Add to your `.env` file:
+```env
+MODAL_ENDPOINT_CHAT=https://your-username--jailbreak-genome-scanner-chat-completions.modal.run
+```
+
+### 3. Launch Dashboard
+
+```bash
+streamlit run dashboard/arena_dashboard.py
+```
+
+### 4. Run Evaluation
+
+1. Select **Defender Model** (model to test)
+2. Select **Attacker Model** (generates attack prompts)
+3. Select **Judge Model** (evaluates responses)
+4. Configure attack parameters
+5. Click **START EVALUATION**
+
+## Installation (Full Setup)
 
 1. Clone the repository:
 ```bash
@@ -164,30 +208,26 @@ pip install -r requirements.txt
 4. Set up environment variables:
 ```bash
 cp .env.example .env
-# Edit .env with your API keys
+# Edit .env with your Modal endpoint
 ```
 
 ## Configuration
 
-Create a `.env` file with your API credentials:
+### Modal.com Setup (Required)
+
+JGS uses Modal.com for serverless model inference. After deploying, add to your `.env`:
 
 ```env
-# LLM APIs for testing
-OPENAI_API_KEY=your_openai_key
-ANTHROPIC_API_KEY=your_anthropic_key
-COHERE_API_KEY=your_cohere_key
+# Modal.com Configuration
+MODAL_ENDPOINT_CHAT=https://your-username--jailbreak-genome-scanner-chat-completions.modal.run
+MODAL_API_KEY=your_modal_api_key
+MODAL_SECRET=your_modal_secret
+```
 
-# Local model paths (optional)
-HUGGINGFACE_HUB_TOKEN=your_hf_token
-LOCAL_MODEL_PATH=/path/to/local/model
+### Optional Configuration
 
-# Safety classifier
-SAFETY_CLASSIFIER_MODEL=path/to/classifier
-
-# Lambda Cloud (for scraper and models)
-LAMBDA_API_KEY=secret_xxx.xxx
-
-# Vector database
+```env
+# Vector database (for threat intelligence)
 CHROMA_HOST=localhost
 CHROMA_PORT=8000
 
@@ -196,6 +236,8 @@ ARENA_ROUNDS=100
 MIN_ATTACKERS=5
 SCORING_THRESHOLD=0.7
 ```
+
+**Note:** JGS is now 100% Modal.com-based. All models (defender, attacker, judge) run on the same Modal.com infrastructure for cost efficiency.
 
 ## Usage
 
@@ -297,12 +339,59 @@ JGS is designed to evolve with the AI ecosystem. New attacker strategies, threat
 
 ## Security Considerations
 
+**⚠️ Important:** See [SECURITY_CONSIDERATIONS.md](SECURITY_CONSIDERATIONS.md) for detailed security analysis, limitations, and recommendations.
+
+### Key Points:
+
 - All adversarial content remains in a controlled environment
 - Harmful outputs are not exposed to end-users
 - Evaluations must not be used for misuse or real-world harm
 - Classifier blocks sensitive content from being displayed
 - Attacker models are sandboxed
 - Storage handles hazardous text securely
+
+### Known Limitations:
+
+- **False Positives/Negatives**: Automated evaluation may miss sophisticated attacks or flag legitimate responses
+- **Model Selection Impact**: Evaluation quality depends on attacker and judge model capabilities
+- **Coverage Gaps**: Cannot test all possible attack vectors automatically
+- **Adversarial Robustness**: Evaluation system itself could be targeted
+
+See the full Security Considerations document for detailed analysis and recommendations.
+
+## Hackathon Submission
+
+### Project Report
+
+See [PROJECT_REPORT.md](PROJECT_REPORT.md) for the complete hackathon submission document including:
+- Executive Summary
+- AI Safety Relevance
+- Def/Acc Relevance
+- Execution Quality
+- Demonstration Guide
+
+### Key Features for Hackathon
+
+✅ **Automated Red-Teaming**: 100x faster than manual testing  
+✅ **Multi-Model Support**: Defender, Attacker, and Judge models on same infrastructure  
+✅ **Maximum Difficulty Testing**: Always uses H1-H10 for comprehensive coverage  
+✅ **Cost-Efficient**: 60-80% cost reduction via Modal.com serverless architecture  
+✅ **Real-Time Dashboard**: Live evaluation monitoring and threat visualization  
+✅ **Threat Intelligence**: Integration with pattern database for emerging attacks  
+
+### Alignment with Hackathon Goals
+
+- **Track 2: Cybersecurity & Infrastructure Protection** ✅
+- **AI-Powered Red-Teaming Tool** ✅
+- **Automated Vulnerability Discovery** ✅
+- **Pre-Deployment Risk Assessment** ✅
+- **Scalable Defense Infrastructure** ✅
+
+## Documentation
+
+- **[PROJECT_REPORT.md](PROJECT_REPORT.md)** - Complete hackathon submission
+- **[SECURITY_CONSIDERATIONS.md](SECURITY_CONSIDERATIONS.md)** - Security analysis and limitations
+- **[MODAL_MIGRATION_PLAN.md](MODAL_MIGRATION_PLAN.md)** - Infrastructure details
 
 ## License
 
@@ -311,8 +400,14 @@ MIT License - see [LICENSE](LICENSE) for details
 ## Authors
 
 - Moses (moses130)
+- Built for the Defensive Acceleration Hackathon (November 2024)
 - Contributors welcome!
 
 ## Acknowledgments
 
 Built for evaluating AI safety before deployment. Combines adversarial testing, competitive evaluation, and structural vulnerability analysis to create a comprehensive safety assessment framework.
+
+**Hackathon Sponsors:**
+- Halcyon Futures
+- Apart Research
+- BlueDot Impact

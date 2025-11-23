@@ -19,7 +19,11 @@ image = (
         "python-multipart",  # Required for FastAPI form data
         "huggingface-hub>=0.20.0",
     )
-    .env({"HF_XET_HIGH_PERFORMANCE": "1"})  # Faster model transfers
+    .env({
+        "HF_XET_HIGH_PERFORMANCE": "1",  # Faster model transfers
+        "HF_HOME": "/root/.cache/huggingface",  # Explicit cache location for volume
+        "TRANSFORMERS_CACHE": "/root/.cache/huggingface",  # Transformers cache location
+    })
 )
 
 app = modal.App("jailbreak-genome-scanner")
@@ -40,6 +44,7 @@ def get_model_cache():
     return _model_cache, _model_lock
 
 # Modal Volume for caching model weights (faster startup)
+# This volume persists model files between container restarts, avoiding re-downloads
 model_volume = modal.Volume.from_name("modal-model-cache", create_if_missing=True)
 
 @app.function(
@@ -75,7 +80,9 @@ def serve(request: dict):
     with lock:
         if model not in cache:
             try:
-                log.info(f"Loading model {model} (first time in this container)")
+                log.info(f"Loading model {model} (checking cache volume first)")
+                # Model files are cached in /root/.cache/huggingface via mounted volume
+                # This avoids re-downloading on every container start
                 cache[model] = LLM(
                     model=model, 
                     tensor_parallel_size=1,
@@ -83,6 +90,8 @@ def serve(request: dict):
                     tokenizer_mode="mistral" if "mistral" in model.lower() else "auto"
                 )
                 log.info(f"Model {model} loaded successfully")
+                # Commit volume to persist model files
+                model_volume.commit()
             except Exception as e:
                 error_msg = str(e)
                 log.error(f"Error loading model {model}: {error_msg}")
@@ -145,7 +154,9 @@ def chat_completions(request: dict):
     with lock:
         if model not in cache:
             try:
-                log.info(f"Loading model {model} (first time in this container)")
+                log.info(f"Loading model {model} (checking cache volume first)")
+                # Model files are cached in /root/.cache/huggingface via mounted volume
+                # This avoids re-downloading on every container start
                 cache[model] = LLM(
                     model=model, 
                     tensor_parallel_size=1,
@@ -153,6 +164,8 @@ def chat_completions(request: dict):
                     tokenizer_mode="mistral" if "mistral" in model.lower() else "auto"
                 )
                 log.info(f"Model {model} loaded successfully")
+                # Commit volume to persist model files
+                model_volume.commit()
             except Exception as e:
                 error_msg = str(e)
                 log.error(f"Error loading model {model}: {error_msg}")
@@ -172,7 +185,13 @@ def chat_completions(request: dict):
         # Get tokenizer from cache or load it
         tokenizer_key = f"{model}_tokenizer"
         if tokenizer_key not in cache:
-            cache[tokenizer_key] = AutoTokenizer.from_pretrained(model, trust_remote_code=True)
+            cache[tokenizer_key] = AutoTokenizer.from_pretrained(
+                model, 
+                trust_remote_code=True,
+                cache_dir="/root/.cache/huggingface"  # Use cached location
+            )
+            # Commit volume after tokenizer download
+            model_volume.commit()
         tokenizer = cache[tokenizer_key]
         
         # Use tokenizer's chat template if available
@@ -256,7 +275,9 @@ def completions(request: dict):
     with lock:
         if model not in cache:
             try:
-                log.info(f"Loading model {model} (first time in this container)")
+                log.info(f"Loading model {model} (checking cache volume first)")
+                # Model files are cached in /root/.cache/huggingface via mounted volume
+                # This avoids re-downloading on every container start
                 cache[model] = LLM(
                     model=model, 
                     tensor_parallel_size=1,
@@ -264,6 +285,8 @@ def completions(request: dict):
                     tokenizer_mode="mistral" if "mistral" in model.lower() else "auto"
                 )
                 log.info(f"Model {model} loaded successfully")
+                # Commit volume to persist model files
+                model_volume.commit()
             except Exception as e:
                 error_msg = str(e)
                 log.error(f"Error loading model {model}: {error_msg}")
