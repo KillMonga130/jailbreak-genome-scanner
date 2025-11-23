@@ -419,10 +419,12 @@ class LambdaDefender:
                 if self._http_client is None:
                     # Create client with connection pooling and optimized timeouts
                     limits = httpx.Limits(max_keepalive_connections=10, max_connections=20)
+                    # Use HTTP/1.1 by default (more compatible, avoids h2 dependency)
+                    # HTTP/2 requires 'h2' package: pip install httpx[http2]
                     self._http_client = httpx.AsyncClient(
-                        timeout=httpx.Timeout(30.0, connect=10.0),  # Reduced from 120s
+                        timeout=httpx.Timeout(30.0, connect=10.0),  # 30s total, 10s connect
                         limits=limits,
-                        http2=True  # Enable HTTP/2 for better performance
+                        http2=False  # Use HTTP/1.1 for compatibility
                     )
         return self._http_client
     
@@ -677,19 +679,35 @@ class LambdaDefender:
                 self._is_healthy = False
                 raise ValueError(error_msg)
             except (httpx.ConnectTimeout, httpx.ConnectError, httpx.NetworkError) as e:
-                error_msg = f"Connection error: Cannot reach API endpoint at {self.api_endpoint}. "
-                error_msg += "This might be due to firewall/security group restrictions. "
-                error_msg += f"Original error: {str(e)}"
+                # Provide helpful error message based on endpoint type
+                if "localhost" in self.api_endpoint or "127.0.0.1" in self.api_endpoint:
+                    error_msg = (
+                        f"Connection error: Cannot reach API endpoint at {self.api_endpoint}.\n"
+                        f"This is a localhost endpoint - make sure:\n"
+                        f"1. SSH tunnel is active: ssh -L 8000:localhost:8000 ubuntu@<instance_ip>\n"
+                        f"2. vLLM server is running on the Lambda instance\n"
+                        f"3. The tunnel is forwarding port 8000 correctly\n"
+                        f"Original error: {str(e)}"
+                    )
+                else:
+                    error_msg = (
+                        f"Connection error: Cannot reach API endpoint at {self.api_endpoint}.\n"
+                        f"This might be due to:\n"
+                        f"1. Firewall/security group restrictions\n"
+                        f"2. Instance not running or vLLM server not started\n"
+                        f"3. Incorrect endpoint URL\n"
+                        f"Original error: {str(e)}"
+                    )
                 log.error(error_msg)
                 self._is_healthy = False
-                # Return error message instead of raising (so evaluation can continue)
-                return f"Error: {error_msg}"
+                # Raise exception so evaluation knows the API call failed
+                raise ConnectionError(error_msg) from e
             except Exception as e:
                 error_msg = f"Error calling Lambda API: {e}"
                 log.error(error_msg)
                 self._is_healthy = False
-                # Return error message instead of raising
-                return f"Error: {error_msg}"
+                # Raise exception instead of returning error string
+                raise RuntimeError(error_msg) from e
         
         # No API endpoint - need to get instance IP and construct endpoint
         # Or use SSH-based inference (not implemented yet)

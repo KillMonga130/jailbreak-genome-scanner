@@ -17,6 +17,21 @@ from typing import Dict, List, Any, Optional
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Import logger early so it can be used below
+from src.utils.logger import setup_logger, log
+
+# Load environment variables from .env file
+try:
+    from dotenv import load_dotenv
+    env_path = project_root / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        log.info(f"Loaded environment variables from {env_path}")
+    else:
+        log.warning(f".env file not found at {env_path}")
+except ImportError:
+    log.warning("python-dotenv not installed, environment variables may not load from .env file")
+
 # Import after path setup
 from src.arena.jailbreak_arena import JailbreakArena
 from src.defenders.llm_defender import LLMDefender
@@ -26,7 +41,6 @@ from src.integrations.lambda_scraper import LambdaWebScraper
 from src.intelligence.threat_intelligence import ThreatIntelligenceEngine
 from src.scoring.jvi_calculator import JVICalculator
 from src.visualization.vector3d_generator import Vector3DGenerator
-from src.utils.logger import setup_logger, log
 
 # Page config
 st.set_page_config(
@@ -916,9 +930,27 @@ def main():
     import json
     from pathlib import Path
     deployment_config_path = Path("data/lambda_deployments.json")
+    instance_discovery_path = Path("data/instance_discovery.json")
     default_model = "microsoft/phi-2"
     default_instance = ""
     default_endpoint = ""
+    
+    # Load instance discovery data to check which instances need SSH tunnels
+    instance_access_info = {}
+    if instance_discovery_path.exists():
+        try:
+            with open(instance_discovery_path, 'r') as f:
+                discovery_data = json.load(f)
+                for inst in discovery_data:
+                    instance_id = inst.get("instance_id")
+                    if instance_id:
+                        instance_access_info[instance_id] = {
+                            "direct_api": inst.get("access", {}).get("direct_api", True),
+                            "ssh_tunnel_needed": inst.get("access", {}).get("ssh_tunnel_needed", False),
+                            "ssh_tunnel_endpoint": inst.get("endpoints", {}).get("ssh_tunnel", "")
+                        }
+        except Exception as e:
+            log.debug(f"Error loading instance discovery: {e}")
     
     # Load all active instances (for scraper)
     active_instances = []
@@ -968,8 +1000,9 @@ def main():
                     
                     default_model = first.get("model_name", "microsoft/phi-2")
                     default_instance = first.get("instance_id", "")
-                    # Prefer local endpoint if available (SSH tunnel)
-                    default_endpoint = first.get("api_endpoint_local") or first.get("api_endpoint", "")
+                    # Prefer direct IP endpoint (more reliable), fall back to localhost if available
+                    # Direct IP works if port is open, localhost only works if SSH tunnel is active
+                    default_endpoint = first.get("api_endpoint") or first.get("api_endpoint_local", "")
                     if not default_endpoint and first.get("instance_ip"):
                         default_endpoint = f"http://{first.get('instance_ip')}:8000/v1/chat/completions"
         except Exception as e:
@@ -1046,26 +1079,83 @@ def main():
                         disabled=True
                     )
                     
-                    # Show status
-                    if selected_instance.get("vllm_running"):
-                        st.success(f"✅ vLLM is running on {selected_instance['instance_ip']}")
+                    # Check instance status via Lambda API
+                    instance_status = selected_instance.get("status", "unknown")
+                    if instance_status == "active":
+                        if selected_instance.get("vllm_running"):
+                            st.success(f"✅ vLLM is running on {selected_instance['instance_ip']}")
+                        else:
+                            st.warning(f"⚠️ vLLM status unknown for {selected_instance['instance_ip']}")
+                    elif instance_status in ["stopped", "terminated"]:
+                        st.error(f"❌ Instance is {instance_status}. Please start it in Lambda Cloud dashboard before use.")
+                        st.info("💡 **Cost Tip**: Instances only charge when running. Stop them when not in use!")
                     else:
-                        st.warning(f"⚠️ vLLM status unknown for {selected_instance['instance_ip']}")
+                        st.warning(f"⚠️ Instance status: {instance_status}")
                     
-                    # Show endpoint options
-                    if selected_instance.get("api_endpoint_local"):
-                        st.info(f"💡 Use SSH tunnel endpoint: `{selected_instance['api_endpoint_local']}`")
+                    # Show endpoint options - check if SSH tunnel is needed
+                    instance_id = selected_instance.get("instance_id", "")
+                    access_info = instance_access_info.get(instance_id, {})
+                    needs_tunnel = access_info.get("ssh_tunnel_needed", False)
+                    direct_api_works = access_info.get("direct_api", True)
+                    
+                    primary_endpoint = selected_instance.get("api_endpoint") or ""
+                    local_endpoint = selected_instance.get("api_endpoint_local") or ""
+                    discovery_tunnel_endpoint = access_info.get("ssh_tunnel_endpoint", "")
+                    
+                    # Prefer SSH tunnel endpoint if direct API doesn't work
+                    if needs_tunnel or not direct_api_works:
+                        # Use SSH tunnel endpoint
+                        tunnel_endpoint = local_endpoint or discovery_tunnel_endpoint
+                        if tunnel_endpoint:
+                            st.warning("⚠️ Port 8000 is blocked - using SSH tunnel endpoint. Make sure SSH tunnel is running!")
+                            api_endpoint = st.text_input(
+                                "API Endpoint",
+                                value=tunnel_endpoint,
+                                help="SSH tunnel endpoint - requires active SSH tunnel"
+                            )
+                            if primary_endpoint and primary_endpoint != tunnel_endpoint:
+                                st.info(f"💡 Direct IP (blocked): `{primary_endpoint}` - Use tunnel endpoint above instead")
+                        else:
+                            # No tunnel endpoint configured, show warning
+                            st.error("⚠️ Port 8000 is blocked but no SSH tunnel endpoint configured!")
+                            st.info(f"Set up SSH tunnel: ssh -i moses.pem -N -L 8001:localhost:8000 ubuntu@{selected_instance.get('instance_ip', '')}")
+                            api_endpoint = st.text_input(
+                                "API Endpoint",
+                                value=local_endpoint or f"http://localhost:8001/v1/chat/completions",
+                                help="SSH tunnel endpoint - set up tunnel first"
+                            )
+                    elif primary_endpoint:
+                        # Direct IP works
                         api_endpoint = st.text_input(
                             "API Endpoint",
-                            value=selected_instance["api_endpoint_local"],
-                            help="Using SSH tunnel endpoint (recommended if port 8000 is blocked)"
+                            value=primary_endpoint,
+                            help="vLLM API endpoint (direct IP)"
+                        )
+                        if local_endpoint and "localhost" in local_endpoint:
+                            st.info(f"💡 SSH tunnel alternative: `{local_endpoint}` (optional)")
+                    elif local_endpoint:
+                        # Only local endpoint available
+                        st.warning("⚠️ Only SSH tunnel endpoint available. Make sure SSH tunnel is running!")
+                        api_endpoint = st.text_input(
+                            "API Endpoint",
+                            value=local_endpoint,
+                            help="SSH tunnel endpoint - requires active SSH tunnel"
                         )
                     else:
-                        api_endpoint = st.text_input(
-                            "API Endpoint",
-                            value=selected_instance.get("api_endpoint", ""),
-                            help="vLLM API endpoint. Use SSH tunnel if port is blocked."
-                        )
+                        # Fallback: construct from IP
+                        if selected_instance.get("instance_ip"):
+                            default = f"http://{selected_instance['instance_ip']}:8000/v1/chat/completions"
+                            api_endpoint = st.text_input(
+                                "API Endpoint",
+                                value=default,
+                                help="vLLM API endpoint"
+                            )
+                        else:
+                            api_endpoint = st.text_input(
+                                "API Endpoint",
+                                value="",
+                                help="Enter vLLM API endpoint (e.g., http://<ip>:8000/v1/chat/completions)"
+                            )
                 else:
                     # Custom instance
                     model_name = st.text_input("Model Name", default_model)
@@ -1442,26 +1532,47 @@ python3 -m vllm.entrypoints.openai.api_server \\
                     scraper = LambdaWebScraper(instance_id=scraper_instance_id if scraper_instance_id else None)
                     log.info(f"Created scraper with instance_id: {scraper_instance_id}")
                     
-                    # Initialize Threat Intelligence Engine with the arena's pattern database
-                    if st.session_state.arena and hasattr(st.session_state.arena, 'pattern_database') and st.session_state.arena.pattern_database:
-                        pattern_db = st.session_state.arena.pattern_database
-                        log.info("Using existing arena pattern database")
+                    # Get arena from session state BEFORE starting thread (session state not thread-safe)
+                    # We'll pass the pattern database reference if it exists
+                    arena_ref = None
+                    pattern_db_ref = None
+                    try:
+                        # Try to get arena and pattern database from session state (may fail in thread)
+                        import streamlit as st_module
+                        if hasattr(st_module, 'session_state') and 'arena' in st_module.session_state:
+                            arena_ref = st_module.session_state.arena
+                            if arena_ref and hasattr(arena_ref, 'pattern_database') and arena_ref.pattern_database:
+                                pattern_db_ref = arena_ref.pattern_database
+                                log.info("Using existing arena pattern database")
+                    except Exception as e:
+                        log.debug(f"Could not access session state in thread (expected): {e}")
+                    
+                    # Use existing pattern database if available, otherwise create new one
+                    if pattern_db_ref:
+                        pattern_db = pattern_db_ref
                     else:
                         # Create new pattern database if arena doesn't have one
                         from src.intelligence.pattern_database import ExploitPatternDatabase
                         pattern_db = ExploitPatternDatabase()
                         log.info("Created new pattern database for intelligence")
-                        # Add to arena if it exists
-                        if st.session_state.arena:
-                            st.session_state.arena.pattern_database = pattern_db
+                        # Try to add to arena if it exists (may fail in thread, that's OK)
+                        if arena_ref:
+                            try:
+                                arena_ref.pattern_database = pattern_db
+                            except Exception:
+                                pass  # Can't modify in thread, will be set later
                     
                     # Initialize threat intelligence engine
                     threat_engine = ThreatIntelligenceEngine(
                         pattern_database=pattern_db,
                         scraper=scraper
                     )
-                    if st.session_state.arena:
-                        st.session_state.arena.threat_intelligence = threat_engine
+                    # Try to add to arena if it exists (may fail in thread)
+                    if arena_ref:
+                        try:
+                            arena_ref.threat_intelligence = threat_engine
+                        except Exception:
+                            pass  # Can't modify in thread, will be set later
                     
                     log.info("Threat intelligence engine initialized, starting scraper...")
                     

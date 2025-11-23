@@ -1,0 +1,64 @@
+[
+  {
+    "instance_id": "8d3d9dac2688407aa395179c75fb4203",
+    "ip": "209.20.159.141",
+    "type": "gpu_1x_h100_pcie",
+    "access": {
+      "ssh": true,
+      "direct_api": true,
+      "ssh_tunnel_needed": false,
+      "models": [
+        "mistralai/Mistral-7B-Instruct-v0.2"
+      ]
+    },
+    "endpoints": {
+      "direct": "http://209.20.159.141:8000/v1/chat/completions"
+    }
+  },
+  {
+    "instance_id": "cd6537df1d7640a995090d45eff85e3e",
+    "ip": "129.80.191.122",
+    "type": "gpu_1x_a10",
+    "access": {
+      "ssh": true,
+      "direct_api": true,
+      "ssh_tunnel_needed": false,
+      "models": [
+        "mistralai/Mistral-7B-Instruct-v0.2"
+      ]
+    },
+    "endpoints": {
+      "direct": "http://129.80.191.122:8000/v1/chat/completions"
+    }
+  },
+  {
+    "instance_id": "fe9576a10897449a8311eb667866abe8",
+    "ip": "150.136.220.151",
+    "type": "gpu_1x_a10",
+    "access": {
+      "ssh": true,
+      "direct_api": false,
+      "ssh_tunnel_needed": true,
+      "models": []
+    },
+    "endpoints": {
+      "ssh_tunnel": "http://localhost:8002/v1/chat/completions",
+      "ssh_tunnel_command": "ssh -i moses.pem -N -L 8002:localhost:8000 ubuntu@150.136.220.151"
+    }
+  },
+  {
+    "instance_id": "9f87a6a5764844f68feed14ee68222c3",
+    "ip": "165.1.79.86",
+    "type": "gpu_1x_a10",
+    "access": {
+      "ssh": true,
+      "direct_api": false,
+      "ssh_tunnel_needed": true,
+      "models": []
+    },
+    "endpoints": {
+      "ssh_tunnel": "http://localhost:8003/v1/chat/completions",
+      "ssh_tunnel_command": "ssh -i moses.pem -N -L 8003:localhost:8000 ubuntu@165.1.79.86"
+    }
+  }
+]

@@ -5,10 +5,28 @@ import httpx
 import re
 import json
 from typing import Optional, Dict, Any, List
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 from src.utils.logger import log
 from src.integrations.lambda_cloud import LambdaCloudClient, LambdaModelRunner
+
+
+def normalize_timestamp(dt: datetime) -> datetime:
+    """
+    Normalize a datetime to be timezone-aware (UTC).
+    
+    Args:
+        dt: Datetime (may be naive or aware)
+        
+    Returns:
+        Timezone-aware datetime in UTC
+    """
+    if dt.tzinfo is None:
+        # Naive datetime - assume UTC
+        return dt.replace(tzinfo=timezone.utc)
+    else:
+        # Aware datetime - convert to UTC
+        return dt.astimezone(timezone.utc)
 
 
 @dataclass
@@ -150,7 +168,11 @@ class LambdaWebScraper:
         enhanced_events = await self._enhance_with_lambda_api(events, api_endpoint, max_results)
         
         # Sort by relevance and limit
-        enhanced_events.sort(key=lambda x: (x.relevance_score, x.timestamp), reverse=True)
+        # Normalize timestamps to avoid mixing timezone-aware and naive datetimes
+        enhanced_events.sort(
+            key=lambda x: (x.relevance_score, normalize_timestamp(x.timestamp)), 
+            reverse=True
+        )
         
         log.info(f"Scraped {len(enhanced_events)} events using Lambda instance")
         return enhanced_events[:max_results]
@@ -246,7 +268,11 @@ Respond with ONLY a number between 0 and 1 representing relevance score."""
                 log.debug(f"Scraping task error: {result}")
         
         # Sort by relevance and timestamp
-        events.sort(key=lambda x: (x.relevance_score, x.timestamp), reverse=True)
+        # Normalize timestamps to avoid mixing timezone-aware and naive datetimes
+        events.sort(
+            key=lambda x: (x.relevance_score, normalize_timestamp(x.timestamp)), 
+            reverse=True
+        )
         
         log.info(f"Local scraping found {len(events)} events")
         return events[:max_results]
@@ -770,7 +796,7 @@ Format as JSON with keys: techniques, example_prompts, target_models, effectiven
         """Get most recent scraped events."""
         sorted_events = sorted(
             self.scraped_events,
-            key=lambda x: x.timestamp,
+            key=lambda x: normalize_timestamp(x.timestamp),
             reverse=True
         )
         return sorted_events[:limit]

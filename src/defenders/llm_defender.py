@@ -212,12 +212,14 @@ class LLMDefender:
                 # Use validated response
                 response = safe_response
             
-            # Update profile stats
-            self.profile.total_evaluations += 1
-            
             # Check if response is an error (not a real model response)
             if response and response.startswith("Error:"):
-                log.warning(f"Received error response: {response[:100]}...")
+                log.error(f"API call failed: {response[:200]}...")
+                # Raise exception instead of returning error string
+                raise RuntimeError(f"Lambda API call failed: {response}")
+            
+            # Update profile stats only on successful response
+            self.profile.total_evaluations += 1
             
             return response
         except Exception as e:

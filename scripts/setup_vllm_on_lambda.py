@@ -289,10 +289,16 @@ def setup_vllm(instance_ip="150.136.146.143", ssh_key="moses.pem", model="micros
         
         # Step 3: Start vLLM server
         print("Step 3: Starting vLLM API server...")
+        # Check if model requires trust_remote_code (Qwen, some others)
+        trust_remote_code_flag = ""
+        if "qwen" in model.lower() or "Qwen" in model:
+            print("Detected Qwen model - adding --trust-remote-code flag")
+            trust_remote_code_flag = "--trust-remote-code"
+        
         start_cmd = ['ssh', '-i', str(ssh_key_path), '-o', 'StrictHostKeyChecking=no',
                      f'ubuntu@{instance_ip}', 
                      'bash', '-c', 
-                     f'pkill -f "vllm.entrypoints.openai.api_server" || true; nohup python3 -m vllm.entrypoints.openai.api_server --model {model} --port 8000 --host 0.0.0.0 > /tmp/vllm.log 2>&1 &']
+                     f'pkill -f "vllm.entrypoints.openai.api_server" || true; nohup python3 -m vllm.entrypoints.openai.api_server --model {model} --port 8000 --host 0.0.0.0 {trust_remote_code_flag} > /tmp/vllm.log 2>&1 &']
         
         try:
             result = subprocess.run(start_cmd, capture_output=True, text=True,

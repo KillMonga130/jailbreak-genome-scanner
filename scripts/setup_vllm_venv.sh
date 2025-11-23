@@ -66,10 +66,18 @@ echo "Starting vLLM server..."
 pkill -f "vllm.entrypoints.openai.api_server" || true
 sleep 2
 
+# Check if model requires trust_remote_code (Qwen, some others)
+TRUST_REMOTE_CODE=""
+if [[ "$MODEL" == *"Qwen"* ]] || [[ "$MODEL" == *"qwen"* ]]; then
+    echo "Detected Qwen model - adding --trust-remote-code flag"
+    TRUST_REMOTE_CODE="--trust-remote-code"
+fi
+
 nohup "$VENV_PYTHON" -m vllm.entrypoints.openai.api_server \
     --model "$MODEL" \
     --port 8000 \
     --host 0.0.0.0 \
+    $TRUST_REMOTE_CODE \
     > /tmp/vllm.log 2>&1 &
 
 echo "vLLM server started in background"

@@ -41,6 +41,9 @@ class PromptGenerator:
         self.bio_agent = BioRadarAgent()
         self.cyber_agent = CyberSentinelAgent()
         
+        # Track used database prompt IDs to ensure variety
+        self.used_prompt_ids: set = set()
+        
         self.strategies = {
             AttackStrategy.ROLEPLAY: self._generate_roleplay,
             AttackStrategy.EMOTIONAL_COERCION: self._generate_emotional_coercion,
@@ -185,10 +188,30 @@ class PromptGenerator:
                 )
                 
                 if db_prompts:
-                    selected = random.choice(db_prompts)
+                    # Filter out already-used prompts to ensure variety
+                    available_prompts = [
+                        p for p in db_prompts
+                        if p.get("prompt_id", "") not in self.used_prompt_ids
+                    ]
+                    
+                    # If all prompts have been used, reset and start over
+                    if not available_prompts:
+                        log.debug(f"All prompts for {db_strategy} have been used, resetting tracking")
+                        self.used_prompt_ids = set()
+                        available_prompts = db_prompts
+                    
+                    # Randomly select from available prompts
+                    import random
+                    random.shuffle(available_prompts)
+                    selected = available_prompts[0]
+                    prompt_id = selected.get("prompt_id", "")
                     prompt_text = selected.get("prompt_text", "")
+                    
                     if prompt_text:
-                        log.debug(f"Using database prompt {selected.get('prompt_id')} ({selected.get('difficulty')})")
+                        # Mark this prompt as used
+                        if prompt_id:
+                            self.used_prompt_ids.add(prompt_id)
+                        log.debug(f"Using database prompt {prompt_id} ({selected.get('difficulty')}) - {len(self.used_prompt_ids)} total used")
                         return prompt_text
         
         # Fallback to generator
